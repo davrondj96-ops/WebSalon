@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { SiteBanner, SitePlan, supabase } from './lib/supabase';
 import { Language, translations } from './i18n/translations';
-import { HeroBannerSlider } from './components/HeroBannerSlider';
+import { Hero } from './components/Hero';
 import {
   AdminRoleIllustration,
   ClientRoleIllustration,
@@ -11,19 +11,22 @@ import { PlansAndCalculator } from './components/PlansAndCalculator';
 import { LeadForm } from './components/LeadForm';
 import { CONTACTS, LEGAL } from './config';
 import {
+  ArrowRight,
+  ArrowUpRight,
   Check,
   ChevronDown,
+  Gem,
+  MapPin,
   Menu,
-  X,
   MessageCircle,
   Phone,
-  MapPin,
-  Sparkles,
+  Plus,
   Scissors,
-  Brush,
   Shirt,
+  Sparkles,
   Store,
-  Gem,
+  Brush,
+  X,
 } from 'lucide-react';
 
 const SEGMENT_ICONS = [Sparkles, Scissors, Scissors, Gem, Shirt, Brush];
@@ -43,15 +46,55 @@ function getInitialLanguage(): Language {
   }
 }
 
+// Разделы сайта живут в hash (#for, #faq, #connect), поэтому GitHub Pages
+// не нужна настройка сервера. Остальные hash — якоря на главной (#plans и т.п.).
+type Page = 'home' | 'for' | 'faq' | 'connect';
+
+const PAGE_BY_HASH: Record<string, Page> = {
+  for: 'for',
+  faq: 'faq',
+  connect: 'connect',
+  lead: 'connect',
+};
+
+interface Route {
+  page: Page;
+  section: string | null;
+  // Новый объект при каждом переходе, чтобы повторный клик снова прокручивал.
+  key: number;
+}
+
+function parseHash(hash: string): Route {
+  const id = hash.replace(/^#\/?/, '');
+  const page = PAGE_BY_HASH[id];
+  return page
+    ? { page, section: null, key: Date.now() }
+    : { page: 'home', section: id || null, key: Date.now() };
+}
+
+const PageHeader: React.FC<{ eyebrow: string; title: string; subtitle?: string }> = ({
+  eyebrow,
+  title,
+  subtitle,
+}) => (
+  <div className="max-w-3xl">
+    <p className="eyebrow">{eyebrow}</p>
+    <h1 className="mt-4 font-display text-[2.4rem] font-semibold uppercase leading-[1] tracking-tight text-ink [text-wrap:balance] sm:text-6xl">
+      {title}
+    </h1>
+    {subtitle && <p className="mt-4 max-w-2xl text-base leading-relaxed text-muted">{subtitle}</p>}
+  </div>
+);
+
 export default function App() {
   const [lang, setLang] = useState<Language>(getInitialLanguage);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [route, setRoute] = useState<Route>(() => parseHash(window.location.hash));
 
   // Supabase RPC data states
   const [plans, setPlans] = useState<SitePlan[]>([]);
   const [banners, setBanners] = useState<SiteBanner[]>([]);
   const [loadingPlans, setLoadingPlans] = useState<boolean>(true);
-  const [loadingBanners, setLoadingBanners] = useState<boolean>(true);
 
   // Lead form prefill states
   const [selectedPlanCode, setSelectedPlanCode] = useState<string>('');
@@ -95,7 +138,6 @@ export default function App() {
 
     async function loadSiteData() {
       setLoadingPlans(true);
-      setLoadingBanners(true);
 
       // allSettled не бросает исключений: при сбое сети покажем «цены уточняйте у менеджера»
       const [plansRes, bannersRes] = await Promise.allSettled([
@@ -105,27 +147,18 @@ export default function App() {
 
       if (!isMounted) return;
 
-      if (
-        plansRes.status === 'fulfilled' &&
-        !plansRes.value.error &&
-        Array.isArray(plansRes.value.data)
-      ) {
-        setPlans(plansRes.value.data as SitePlan[]);
-      } else {
-        setPlans([]);
-      }
+      setPlans(
+        plansRes.status === 'fulfilled' && !plansRes.value.error && Array.isArray(plansRes.value.data)
+          ? (plansRes.value.data as SitePlan[])
+          : []
+      );
       setLoadingPlans(false);
 
-      if (
-        bannersRes.status === 'fulfilled' &&
-        !bannersRes.value.error &&
-        Array.isArray(bannersRes.value.data)
-      ) {
-        setBanners(bannersRes.value.data as SiteBanner[]);
-      } else {
-        setBanners([]);
-      }
-      setLoadingBanners(false);
+      setBanners(
+        bannersRes.status === 'fulfilled' && !bannersRes.value.error && Array.isArray(bannersRes.value.data)
+          ? (bannersRes.value.data as SiteBanner[])
+          : []
+      );
     }
 
     loadSiteData();
@@ -135,20 +168,35 @@ export default function App() {
     };
   }, []);
 
-  const handleScrollToSection = (sectionId: string) => {
-    setMobileMenuOpen(false);
-    const cleanId = sectionId.replace(/^#/, '');
-    const target = document.getElementById(cleanId);
-    if (target) {
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
+  // Back/forward в браузере и ручная правка адреса
+  useEffect(() => {
+    const onHashChange = () => setRoute(parseHash(window.location.hash));
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
 
-  const handleSelectPlanForLead = (
-    planCode: string,
-    mastersCount?: number,
-    branchesCount?: number
-  ) => {
+  // После перехода: к якорю на главной или в начало раздела
+  useEffect(() => {
+    if (route.section) {
+      const target = document.getElementById(route.section);
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
+    }
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }, [route]);
+
+  const navigate = useCallback((hash: string) => {
+    setMobileMenuOpen(false);
+    const target = hash.startsWith('#') ? hash : `#${hash}`;
+    if (window.location.hash !== target) {
+      window.history.pushState(null, '', target);
+    }
+    setRoute(parseHash(target));
+  }, []);
+
+  const handleSelectPlanForLead = (planCode: string, mastersCount?: number, branchesCount?: number) => {
     setSelectedPlanCode(planCode);
     if (typeof mastersCount === 'number') {
       setPrefilledMasters(mastersCount);
@@ -156,183 +204,166 @@ export default function App() {
     if (typeof branchesCount === 'number') {
       setPrefilledBranches(branchesCount);
     }
-    handleScrollToSection('#lead');
+    navigate('#connect');
   };
 
-  const activePlans = plans;
+  const navItems: { hash: string; label: string; page: Page; section?: string }[] = [
+    { hash: '#', label: t.nav.home, page: 'home' },
+    { hash: '#features', label: t.nav.features, page: 'home', section: 'features' },
+    { hash: '#plans', label: t.nav.plans, page: 'home', section: 'plans' },
+    { hash: '#calculator', label: t.nav.calculator, page: 'home', section: 'calculator' },
+    { hash: '#for', label: t.nav.forWhom, page: 'for' },
+    { hash: '#faq', label: t.nav.faq, page: 'faq' },
+  ];
+
+  const isActive = (item: (typeof navItems)[number]) =>
+    item.page === route.page && (item.page !== 'home' || (item.section ?? null) === route.section);
+
+  const langSwitcher = (
+    <div
+      role="group"
+      aria-label="Language switcher"
+      className="glass-tile flex items-center rounded-full p-0.5 text-[11px] font-bold"
+    >
+      {(['ru', 'uz'] as const).map((code) => (
+        <button
+          key={code}
+          type="button"
+          aria-pressed={lang === code}
+          onClick={() => setLang(code)}
+          className={`rounded-full px-2.5 py-1 uppercase transition-colors ${
+            lang === code ? 'bg-ink text-white' : 'text-muted hover:text-ink'
+          }`}
+        >
+          {code}
+        </button>
+      ))}
+    </div>
+  );
+
+  const roleCards = [
+    { data: t.whatSalonGets.cards.client, Illustration: ClientRoleIllustration },
+    { data: t.whatSalonGets.cards.admin, Illustration: AdminRoleIllustration },
+    { data: t.whatSalonGets.cards.owner, Illustration: OwnerRoleIllustration },
+  ];
+
+  const contactRows = (
+    <ul className="space-y-2.5 text-sm">
+      {CONTACTS.telegramUrl && (
+        <li>
+          <a
+            href={CONTACTS.telegramUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="glass-tile flex items-center gap-3 rounded-2xl px-4 py-3 font-semibold text-ink transition-colors hover:text-plum-deep"
+          >
+            <MessageCircle className="h-4 w-4 text-plum" aria-hidden="true" />
+            <span>{CONTACTS.telegramHandle}</span>
+          </a>
+        </li>
+      )}
+      {CONTACTS.phoneHref && (
+        <li>
+          <a
+            href={CONTACTS.phoneHref}
+            className="glass-tile flex items-center gap-3 rounded-2xl px-4 py-3 font-semibold text-ink tabular-nums transition-colors hover:text-plum-deep"
+          >
+            <Phone className="h-4 w-4 text-plum" aria-hidden="true" />
+            <span>{CONTACTS.phoneDisplay}</span>
+          </a>
+        </li>
+      )}
+      <li className="glass-tile flex items-center gap-3 rounded-2xl px-4 py-3 text-muted">
+        <MapPin className="h-4 w-4 text-plum" aria-hidden="true" />
+        <span>{t.footer.cityDisplay}</span>
+      </li>
+    </ul>
+  );
 
   return (
-    <div className="min-h-screen bg-[#faf7f5] text-[#1f1a1c]">
-      {/* 1. Sticky Header */}
-      <header className="sticky top-0 z-40 border-b border-[#ece3de] bg-[#faf7f5]/95 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-8 px-4 py-3.5 sm:px-6 lg:px-8">
-          {/* Zone 1: Brand Title */}
+    <div className="min-h-screen text-ink">
+      {/* Header */}
+      <header className="sticky top-0 z-40 px-3 pt-3 sm:px-6">
+        <div className="glass mx-auto flex max-w-6xl items-center justify-between gap-4 rounded-full py-2 pr-2 pl-5">
           <a
             href="#"
-            className="text-lg font-extrabold tracking-tight text-[#1f1a1c] whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-[#b76e79]"
+            onClick={(e) => {
+              e.preventDefault();
+              navigate('#');
+            }}
+            className="flex shrink-0 items-center gap-3 focus-visible:outline-2 focus-visible:outline-plum"
           >
-            {t.brandName}
+            <span className="font-display text-2xl font-semibold leading-none text-ink">
+              I<span className="text-plum">·</span>F
+            </span>
+            <span className="hidden text-[11px] font-bold uppercase tracking-[0.16em] text-ink sm:inline">
+              {t.brandName}
+            </span>
           </a>
 
-          {/* Zone 2: Nav Links + Language Switcher */}
-          <nav
-            aria-label="Primary"
-            className="hidden md:flex items-center gap-7 text-sm font-semibold text-[#5c5256]"
-          >
-            <a
-              href="#features"
-              onClick={(e) => {
-                e.preventDefault();
-                handleScrollToSection('#features');
-              }}
-              className="transition-colors hover:text-[#1f1a1c] hover:underline hover:underline-offset-4 whitespace-nowrap shrink-0"
-            >
-              {t.nav.features}
-            </a>
-            <a
-              href="#plans"
-              onClick={(e) => {
-                e.preventDefault();
-                handleScrollToSection('#plans');
-              }}
-              className="transition-colors hover:text-[#1f1a1c] hover:underline hover:underline-offset-4 whitespace-nowrap shrink-0"
-            >
-              {t.nav.plans}
-            </a>
-            <a
-              href="#faq"
-              onClick={(e) => {
-                e.preventDefault();
-                handleScrollToSection('#faq');
-              }}
-              className="transition-colors hover:text-[#1f1a1c] hover:underline hover:underline-offset-4 whitespace-nowrap shrink-0"
-            >
-              {t.nav.faq}
-            </a>
-
-            {/* RU / UZ Switcher */}
-            <div
-              role="group"
-              aria-label="Language switcher"
-              className="flex items-center rounded-lg border border-[#e2d6d0] bg-white p-0.5 text-xs font-bold"
-            >
-              <button
-                type="button"
-                onClick={() => setLang('ru')}
-                className={`rounded-md px-2.5 py-1 transition-colors whitespace-nowrap shrink-0 ${
-                  lang === 'ru'
-                    ? 'bg-[#1f1a1c] text-white'
-                    : 'text-[#5c5256] hover:text-[#1f1a1c]'
+          <nav aria-label="Primary" className="hidden items-center gap-1 lg:flex">
+            {navItems.map((item) => (
+              <a
+                key={item.hash}
+                href={item.hash}
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigate(item.hash);
+                }}
+                aria-current={isActive(item) ? 'page' : undefined}
+                className={`rounded-full px-3 py-2 text-[11px] font-bold uppercase tracking-[0.1em] whitespace-nowrap transition-colors ${
+                  isActive(item) ? 'bg-white/80 text-plum-deep' : 'text-muted hover:text-ink'
                 }`}
               >
-                RU
-              </button>
-              <button
-                type="button"
-                onClick={() => setLang('uz')}
-                className={`rounded-md px-2.5 py-1 transition-colors whitespace-nowrap shrink-0 ${
-                  lang === 'uz'
-                    ? 'bg-[#1f1a1c] text-white'
-                    : 'text-[#5c5256] hover:text-[#1f1a1c]'
-                }`}
-              >
-                UZ
-              </button>
-            </div>
+                {item.label}
+              </a>
+            ))}
           </nav>
 
-          {/* Zone 3: Primary CTA (Desktop) + Mobile Burger */}
-          <div className="flex items-center gap-2.5 shrink-0">
+          <div className="flex shrink-0 items-center gap-2">
+            {langSwitcher}
             <button
               type="button"
-              onClick={() => handleScrollToSection('#lead')}
-              className="hidden md:inline-flex min-h-[42px] items-center justify-center rounded-xl bg-[#b76e79] px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#a35c67] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b76e79] whitespace-nowrap shrink-0"
+              onClick={() => navigate('#connect')}
+              className="btn-primary hidden min-h-[40px] px-4 text-[11px] uppercase tracking-[0.1em] whitespace-nowrap sm:inline-flex focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-plum"
             >
-              {t.nav.connectCta}
+              <span>{t.nav.connectCta}</span>
+              <Plus className="h-3.5 w-3.5" />
             </button>
-
-            {/* Mobile RU/UZ + Burger */}
-            <div className="flex items-center gap-2 md:hidden">
-              <div className="flex items-center rounded-lg border border-[#e2d6d0] bg-white p-0.5 text-xs font-bold">
-                <button
-                  type="button"
-                  onClick={() => setLang('ru')}
-                  className={`rounded-md px-2 py-1 transition-colors ${
-                    lang === 'ru'
-                      ? 'bg-[#1f1a1c] text-white'
-                      : 'text-[#5c5256]'
-                  }`}
-                >
-                  RU
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLang('uz')}
-                  className={`rounded-md px-2 py-1 transition-colors ${
-                    lang === 'uz'
-                      ? 'bg-[#1f1a1c] text-white'
-                      : 'text-[#5c5256]'
-                  }`}
-                >
-                  UZ
-                </button>
-              </div>
-
-              <button
-                type="button"
-                aria-label={mobileMenuOpen ? t.nav.closeMenu : t.nav.openMenu}
-                aria-expanded={mobileMenuOpen}
-                onClick={() => setMobileMenuOpen((prev) => !prev)}
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#e2d6d0] bg-white text-[#1f1a1c] focus-visible:outline-2 focus-visible:outline-[#b76e79]"
-              >
-                {mobileMenuOpen ? (
-                  <X className="h-5 w-5" />
-                ) : (
-                  <Menu className="h-5 w-5" />
-                )}
-              </button>
-            </div>
+            <button
+              type="button"
+              aria-label={mobileMenuOpen ? t.nav.closeMenu : t.nav.openMenu}
+              aria-expanded={mobileMenuOpen}
+              onClick={() => setMobileMenuOpen((prev) => !prev)}
+              className="glass-tile flex h-10 w-10 items-center justify-center rounded-full text-ink lg:hidden focus-visible:outline-2 focus-visible:outline-plum"
+            >
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
           </div>
         </div>
 
-        {/* Mobile Drawer Menu */}
         {mobileMenuOpen && (
-          <div className="border-t border-[#ece3de] bg-white px-4 pt-3 pb-5 md:hidden">
-            <nav className="flex flex-col space-y-2 text-base font-semibold text-[#1f1a1c]">
-              <a
-                href="#features"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleScrollToSection('#features');
-                }}
-                className="rounded-xl px-3 py-2.5 hover:bg-[#faf7f5]"
-              >
-                {t.nav.features}
-              </a>
-              <a
-                href="#plans"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleScrollToSection('#plans');
-                }}
-                className="rounded-xl px-3 py-2.5 hover:bg-[#faf7f5]"
-              >
-                {t.nav.plans}
-              </a>
-              <a
-                href="#faq"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleScrollToSection('#faq');
-                }}
-                className="rounded-xl px-3 py-2.5 hover:bg-[#faf7f5]"
-              >
-                {t.nav.faq}
-              </a>
+          <div className="glass mx-auto mt-2 max-w-6xl rounded-[24px] p-3 lg:hidden">
+            <nav className="flex flex-col">
+              {navItems.map((item) => (
+                <a
+                  key={item.hash}
+                  href={item.hash}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate(item.hash);
+                  }}
+                  className={`rounded-2xl px-4 py-3 text-sm font-semibold ${
+                    isActive(item) ? 'bg-white/80 text-plum-deep' : 'text-ink'
+                  }`}
+                >
+                  {item.label}
+                </a>
+              ))}
               <button
                 type="button"
-                onClick={() => handleScrollToSection('#lead')}
-                className="mt-2 flex min-h-[46px] w-full items-center justify-center rounded-xl bg-[#b76e79] px-5 py-3 text-sm font-bold text-white"
+                onClick={() => navigate('#connect')}
+                className="btn-primary mt-2 min-h-[46px] w-full px-5 text-sm"
               >
                 {t.nav.connectCta}
               </button>
@@ -341,302 +372,222 @@ export default function App() {
         )}
       </header>
 
-      <main>
-        {/* 2. Banners Slider / Static First Screen */}
-        <HeroBannerSlider
-          lang={lang}
-          banners={banners}
-          loading={loadingBanners}
-          onScrollToSection={handleScrollToSection}
-        />
+      <main className="pb-16">
+        {route.page === 'home' && (
+          <>
+            <Hero lang={lang} banners={banners} onNavigate={navigate} />
 
-        {/* 3. Trust Numbers (Цифры доверия — 4 tiles) */}
-        <section className="mx-auto max-w-6xl px-4 pb-12 sm:px-6 lg:px-8 lg:pb-16">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {t.trust.items.map((item, idx) => (
-              <div
-                key={idx}
-                className="rounded-2xl border border-[#ece3de] bg-white p-6 shadow-[0_6px_20px_-10px_rgba(31,26,28,0.05)]"
-              >
-                <div className="text-xl font-extrabold tracking-tight text-[#1f1a1c] tabular-nums">
-                  {item.title}
-                </div>
-                <p className="mt-2 text-sm leading-relaxed text-[#5c5256]">
-                  {item.subtitle}
-                </p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* 3b. Segments (Для кого) */}
-        <section className="mx-auto max-w-6xl px-4 pb-4 sm:px-6 lg:px-8">
-          <div className="max-w-2xl">
-            <p className="text-sm font-semibold text-[#b76e79]">{t.segments.eyebrow}</p>
-            <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-[#1f1a1c] [text-wrap:balance] sm:text-4xl">
-              {t.segments.title}
-            </h2>
-            <p className="mt-3 text-base text-[#5c5256]">{t.segments.subtitle}</p>
-          </div>
-          <ul className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {t.segments.items.map((item, idx) => {
-              const Icon = SEGMENT_ICONS[idx] ?? Store;
-              return (
-                <li
-                  key={idx}
-                  className="flex gap-4 rounded-2xl border border-[#ece3de] bg-white p-5 shadow-[0_6px_20px_-10px_rgba(31,26,28,0.05)]"
-                >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#b76e79]/10 text-[#b76e79]">
-                    <Icon className="h-5 w-5" aria-hidden="true" />
-                  </span>
-                  <div>
-                    <h3 className="text-base font-bold text-[#1f1a1c]">{item.title}</h3>
-                    <p className="mt-1 text-sm leading-relaxed text-[#5c5256]">{item.description}</p>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-
-        {/* 4. What the Salon Gets (Что получает салон — 3 карточки) */}
-        <section
-          id="features"
-          className="mx-auto max-w-6xl scroll-mt-20 px-4 py-14 sm:px-6 lg:px-8 lg:py-20"
-        >
-          <div className="max-w-2xl">
-            <p className="text-sm font-semibold text-[#b76e79]">
-              {t.whatSalonGets.eyebrow}
-            </p>
-            <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-[#1f1a1c] [text-wrap:balance] sm:text-4xl">
-              {t.whatSalonGets.title}
-            </h2>
-            <p className="mt-3 text-base text-[#5c5256]">
-              {t.whatSalonGets.subtitle}
-            </p>
-          </div>
-
-          <div className="mt-10 grid grid-cols-1 gap-6 lg:grid-cols-3">
-            {/* Card 1: Clients */}
-            <div className="flex flex-col justify-between rounded-2xl border border-[#ece3de] bg-white p-6 shadow-[0_8px_28px_-12px_rgba(31,26,28,0.06)] sm:p-7">
-              <div>
-                <p className="text-xs font-bold text-[#b76e79]">
-                  {t.whatSalonGets.cards.client.role}
-                </p>
-                <h3 className="mt-2 text-xl font-extrabold text-[#1f1a1c]">
-                  {t.whatSalonGets.cards.client.title}
-                </h3>
-                <p className="mt-3 text-sm leading-relaxed text-[#5c5256]">
-                  {t.whatSalonGets.cards.client.description}
-                </p>
-
-                <ul className="mt-4 space-y-2 text-xs font-medium text-[#3d3538]">
-                  {t.whatSalonGets.cards.client.highlights.map((hl, i) => (
-                    <li key={i} className="flex items-center gap-2">
-                      <Check className="h-3.5 w-3.5 shrink-0 text-[#b76e79]" />
-                      <span>{hl}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="mt-6">
-                <ClientRoleIllustration lang={lang} />
-              </div>
-            </div>
-
-            {/* Card 2: Administrator */}
-            <div className="flex flex-col justify-between rounded-2xl border border-[#ece3de] bg-white p-6 shadow-[0_8px_28px_-12px_rgba(31,26,28,0.06)] sm:p-7">
-              <div>
-                <p className="text-xs font-bold text-[#b76e79]">
-                  {t.whatSalonGets.cards.admin.role}
-                </p>
-                <h3 className="mt-2 text-xl font-extrabold text-[#1f1a1c]">
-                  {t.whatSalonGets.cards.admin.title}
-                </h3>
-                <p className="mt-3 text-sm leading-relaxed text-[#5c5256]">
-                  {t.whatSalonGets.cards.admin.description}
-                </p>
-
-                <ul className="mt-4 space-y-2 text-xs font-medium text-[#3d3538]">
-                  {t.whatSalonGets.cards.admin.highlights.map((hl, i) => (
-                    <li key={i} className="flex items-center gap-2">
-                      <Check className="h-3.5 w-3.5 shrink-0 text-[#b76e79]" />
-                      <span>{hl}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="mt-6">
-                <AdminRoleIllustration lang={lang} />
-              </div>
-            </div>
-
-            {/* Card 3: Owner */}
-            <div className="flex flex-col justify-between rounded-2xl border border-[#ece3de] bg-white p-6 shadow-[0_8px_28px_-12px_rgba(31,26,28,0.06)] sm:p-7">
-              <div>
-                <p className="text-xs font-bold text-[#b76e79]">
-                  {t.whatSalonGets.cards.owner.role}
-                </p>
-                <h3 className="mt-2 text-xl font-extrabold text-[#1f1a1c]">
-                  {t.whatSalonGets.cards.owner.title}
-                </h3>
-                <p className="mt-3 text-sm leading-relaxed text-[#5c5256]">
-                  {t.whatSalonGets.cards.owner.description}
-                </p>
-
-                <ul className="mt-4 space-y-2 text-xs font-medium text-[#3d3538]">
-                  {t.whatSalonGets.cards.owner.highlights.map((hl, i) => (
-                    <li key={i} className="flex items-center gap-2">
-                      <Check className="h-3.5 w-3.5 shrink-0 text-[#b76e79]" />
-                      <span>{hl}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="mt-6">
-                <OwnerRoleIllustration lang={lang} />
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* 5. How to Connect (Как подключиться — 3 шага) */}
-        <section className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
-          <div className="rounded-2xl border border-[#ece3de] bg-white p-6 shadow-xs sm:p-10 lg:p-12">
-            <div className="max-w-2xl">
-              <p className="text-sm font-semibold text-[#b76e79]">
-                {t.howToConnect.eyebrow}
-              </p>
-              <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-[#1f1a1c] [text-wrap:balance] sm:text-3xl">
-                {t.howToConnect.title}
-              </h2>
-              <p className="mt-2.5 text-base text-[#5c5256]">
-                {t.howToConnect.subtitle}
-              </p>
-            </div>
-
-            <div className="mt-8 grid grid-cols-1 gap-6 md:grid-cols-3">
-              {t.howToConnect.steps.map((stepObj, idx) => (
-                <div
-                  key={idx}
-                  className="rounded-2xl bg-[#faf7f5] p-6"
-                >
-                  <div className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-[#b76e79] text-xs font-extrabold text-white tabular-nums">
-                    0{idx + 1}
-                  </div>
-                  <h3 className="mt-4 text-lg font-bold text-[#1f1a1c]">
-                    {stepObj.title}
-                  </h3>
-                  <p className="mt-2 text-sm leading-relaxed text-[#5c5256]">
-                    {stepObj.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* 6 & 7. Tariffs (id="plans") + Interactive Calculator */}
-        <PlansAndCalculator
-          lang={lang}
-          plans={activePlans}
-          loading={loadingPlans}
-          onSelectPlanForLead={handleSelectPlanForLead}
-          onScrollToLead={() => handleScrollToSection('#lead')}
-        />
-
-        {/* 8. FAQ (id="faq", accordion, 7 questions) */}
-        <section
-          id="faq"
-          className="mx-auto max-w-4xl scroll-mt-20 px-4 py-14 sm:px-6 lg:px-8 lg:py-20"
-        >
-          <div className="text-center">
-            <p className="text-sm font-semibold text-[#b76e79]">{t.faq.eyebrow}</p>
-            <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-[#1f1a1c] [text-wrap:balance] sm:text-4xl">
-              {t.faq.title}
-            </h2>
-            <p className="mx-auto mt-3 max-w-xl text-base text-[#5c5256]">
-              {t.faq.subtitle}
-            </p>
-          </div>
-
-          <div className="mt-10 space-y-3">
-            {t.faq.items.map((item, idx) => {
-              const isOpen = openFaqIndex === idx;
-              return (
-                <div
-                  key={idx}
-                  className="overflow-hidden rounded-2xl border border-[#ece3de] bg-white transition-colors"
-                >
-                  <button
-                    type="button"
-                    aria-expanded={isOpen}
-                    onClick={() =>
-                      setOpenFaqIndex(isOpen ? null : idx)
-                    }
-                    className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left text-base font-bold text-[#1f1a1c] transition-colors hover:text-[#b76e79] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#b76e79]"
-                  >
-                    <span>{item.q}</span>
-                    <ChevronDown
-                      className={`h-5 w-5 shrink-0 text-[#b76e79] transition-transform duration-150 ${
-                        isOpen ? 'rotate-180' : ''
-                      }`}
-                    />
-                  </button>
-                  {isOpen && (
-                    <div className="border-t border-[#f2ebe7] px-6 pt-3 pb-5 text-sm leading-relaxed text-[#5c5256] sm:text-base">
-                      {item.a}
+            {/* Почему мы — плитки-метрики */}
+            <section className="mx-auto max-w-6xl px-4 pt-5 sm:px-6 lg:px-8">
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-5">
+                {t.trust.items.map((item, idx) => (
+                  <div key={idx} className="glass rounded-[24px] p-4 sm:p-5">
+                    <div className="font-display text-2xl font-semibold leading-tight text-plum-deep sm:text-[1.7rem]">
+                      {item.title}
                     </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </section>
+                    <p className="mt-1.5 text-xs leading-relaxed text-muted">{item.subtitle}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
 
-        {/* 9. Lead Form (id="lead") */}
-        <LeadForm
-          lang={lang}
-          plans={activePlans}
-          selectedPlanCode={selectedPlanCode}
-          prefilledMasters={prefilledMasters}
-          prefilledBranches={prefilledBranches}
-          onChangeSelectedPlan={setSelectedPlanCode}
-        />
+            {/* Возможности */}
+            <section id="features" className="mx-auto mt-14 max-w-6xl scroll-mt-20 px-4 sm:px-6 lg:mt-20 lg:px-8">
+              <div className="glass rounded-[32px] p-5 sm:p-8">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between lg:gap-10">
+                  <div>
+                    <p className="eyebrow">{t.whatSalonGets.eyebrow}</p>
+                    <h2 className="mt-3 font-display text-3xl font-semibold uppercase leading-[1.02] tracking-tight text-ink sm:text-[2.6rem]">
+                      {t.whatSalonGets.title}
+                    </h2>
+                  </div>
+                  <p className="max-w-sm text-sm leading-relaxed text-muted">{t.whatSalonGets.subtitle}</p>
+                </div>
+
+                <div className="mt-7 grid grid-cols-1 gap-4 lg:grid-cols-3 lg:gap-5">
+                  {roleCards.map(({ data, Illustration }, idx) => (
+                    <article key={idx} className="velvet flex flex-col rounded-[24px] p-5 text-white">
+                      <span className="self-start rounded-full border border-white/25 bg-white/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-white/85">
+                        {data.role}
+                      </span>
+                      <h3 className="mt-4 font-display text-[1.7rem] font-semibold leading-tight">{data.title}</h3>
+                      <p className="mt-2 text-sm leading-relaxed text-white/70">{data.description}</p>
+                      <ul className="mt-4 space-y-1.5 text-xs font-medium text-white/90">
+                        {data.highlights.map((hl, i) => (
+                          <li key={i} className="flex items-center gap-2">
+                            <Check className="h-3.5 w-3.5 shrink-0 text-[#c4b2fa]" aria-hidden="true" />
+                            <span>{hl}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      <div className="mt-auto pt-5">
+                        <Illustration lang={lang} />
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            {/* Тарифы и калькулятор */}
+            <PlansAndCalculator
+              lang={lang}
+              plans={plans}
+              loading={loadingPlans}
+              onSelectPlanForLead={handleSelectPlanForLead}
+              onScrollToLead={() => navigate('#connect')}
+            />
+          </>
+        )}
+
+        {route.page === 'for' && (
+          <section className="mx-auto max-w-6xl px-4 pt-10 sm:px-6 lg:px-8 lg:pt-16">
+            <PageHeader eyebrow={t.segments.eyebrow} title={t.segments.title} subtitle={t.segments.subtitle} />
+            <ul className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {t.segments.items.map((item, idx) => {
+                const Icon = SEGMENT_ICONS[idx] ?? Store;
+                return (
+                  <li key={idx} className="glass flex flex-col rounded-[24px] p-6">
+                    <span className="glass-tile flex h-12 w-12 items-center justify-center rounded-2xl text-plum-deep">
+                      <Icon className="h-5 w-5" aria-hidden="true" />
+                    </span>
+                    <h2 className="mt-5 font-display text-2xl font-semibold leading-tight text-ink">{item.title}</h2>
+                    <p className="mt-2 text-sm leading-relaxed text-muted">{item.description}</p>
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="glass mt-6 flex flex-col items-start justify-between gap-4 rounded-[24px] p-6 sm:flex-row sm:items-center">
+              <p className="font-display text-2xl font-semibold text-ink">{t.hero.title}</p>
+              <button
+                type="button"
+                onClick={() => navigate('#plans')}
+                className="btn-primary min-h-[46px] px-6 text-sm uppercase tracking-[0.08em]"
+              >
+                <span>{t.hero.secondaryCta}</span>
+                <ArrowUpRight className="h-4 w-4" />
+              </button>
+            </div>
+          </section>
+        )}
+
+        {route.page === 'faq' && (
+          <section className="mx-auto max-w-4xl px-4 pt-10 sm:px-6 lg:px-8 lg:pt-16">
+            <PageHeader eyebrow={t.faq.eyebrow} title={t.faq.title} subtitle={t.faq.subtitle} />
+            <div className="mt-10 space-y-3">
+              {t.faq.items.map((item, idx) => {
+                const isOpen = openFaqIndex === idx;
+                return (
+                  <div key={idx} className="glass overflow-hidden rounded-[22px]">
+                    <button
+                      type="button"
+                      aria-expanded={isOpen}
+                      onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
+                      className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left text-base font-bold text-ink transition-colors hover:text-plum-deep focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-plum"
+                    >
+                      <span>{item.q}</span>
+                      <ChevronDown
+                        className={`h-5 w-5 shrink-0 text-plum transition-transform duration-150 ${
+                          isOpen ? 'rotate-180' : ''
+                        }`}
+                      />
+                    </button>
+                    {isOpen && (
+                      <div className="border-t border-white/70 px-6 pt-3 pb-5 text-sm leading-relaxed text-muted sm:text-base">
+                        {item.a}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <div className="mt-8 text-center">
+              <button
+                type="button"
+                onClick={() => navigate('#connect')}
+                className="btn-primary min-h-[48px] px-7 text-sm uppercase tracking-[0.08em]"
+              >
+                <span>{t.hero.primaryCta}</span>
+                <ArrowRight className="h-4 w-4" />
+              </button>
+            </div>
+          </section>
+        )}
+
+        {route.page === 'connect' && (
+          <section className="mx-auto max-w-6xl px-4 pt-10 sm:px-6 lg:px-8 lg:pt-16">
+            <PageHeader
+              eyebrow={t.howToConnect.eyebrow}
+              title={t.howToConnect.title}
+              subtitle={t.howToConnect.subtitle}
+            />
+
+            {/* Шаги подключения */}
+            <ol className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-3">
+              {t.howToConnect.steps.map((step, idx) => (
+                <li key={idx} className="glass relative rounded-[24px] p-6">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full border border-plum/40 bg-white/70 font-display text-lg font-semibold text-plum-deep tabular-nums">
+                    0{idx + 1}
+                  </span>
+                  {idx < t.howToConnect.steps.length - 1 && (
+                    <span
+                      aria-hidden="true"
+                      className="absolute top-11 right-[-1.1rem] z-10 hidden w-8 border-t border-dashed border-plum/50 md:block"
+                    />
+                  )}
+                  <h2 className="mt-5 text-sm font-extrabold uppercase tracking-[0.06em] text-ink">{step.title}</h2>
+                  <p className="mt-2 text-sm leading-relaxed text-muted">{step.description}</p>
+                </li>
+              ))}
+            </ol>
+
+            {/* Контакты + форма */}
+            <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-12">
+              <aside className="glass flex flex-col self-start rounded-[28px] p-6 sm:p-8 lg:col-span-4">
+                <h2 className="font-display text-3xl font-semibold uppercase leading-[1.02] text-ink">
+                  {t.connect.contactsTitle}
+                </h2>
+                <p className="mt-3 text-sm leading-relaxed text-muted">{t.connect.contactsText}</p>
+                <div className="mt-6">{contactRows}</div>
+                <div className="velvet mt-6 rounded-[22px] p-5 text-white">
+                  <p className="font-display text-2xl font-semibold leading-tight">{t.trust.items[2].title}</p>
+                  <p className="mt-1.5 text-xs leading-relaxed text-white/70">{t.trust.items[2].subtitle}</p>
+                </div>
+              </aside>
+              <div className="lg:col-span-8">
+                <LeadForm
+                  lang={lang}
+                  plans={plans}
+                  selectedPlanCode={selectedPlanCode}
+                  prefilledMasters={prefilledMasters}
+                  prefilledBranches={prefilledBranches}
+                  onChangeSelectedPlan={setSelectedPlanCode}
+                />
+              </div>
+            </div>
+          </section>
+        )}
       </main>
 
-      {/* 10. Footer */}
-      <footer className="border-t border-[#ece3de] bg-white">
-        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 gap-8 md:grid-cols-12">
-            {/* Brand & Tagline */}
+      {/* Footer */}
+      <footer className="mx-auto max-w-6xl px-4 pb-8 sm:px-6 lg:px-8">
+        <div className="glass rounded-[28px] p-6 sm:p-8">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-12">
             <div className="md:col-span-5">
-              <div className="text-lg font-extrabold tracking-tight text-[#1f1a1c]">
-                {t.brandName}
-              </div>
-              <p className="mt-2.5 max-w-sm text-sm leading-relaxed text-[#5c5256]">
-                {t.footer.tagline}
-              </p>
+              <div className="font-display text-2xl font-semibold text-ink">{t.brandName}</div>
+              <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted">{t.footer.tagline}</p>
             </div>
-
-            {/* Contacts */}
             <div className="md:col-span-4">
-              <div className="text-xs font-bold tracking-wide text-[#1f1a1c]">
-                {t.footer.contactsTitle}
-              </div>
-              <ul className="mt-3 space-y-2.5 text-sm text-[#5c5256]">
+              <div className="eyebrow">{t.footer.contactsTitle}</div>
+              <ul className="mt-3 space-y-2 text-sm text-muted">
                 {CONTACTS.telegramUrl && (
                   <li className="flex items-center gap-2">
-                    <MessageCircle className="h-4 w-4 text-[#b76e79]" />
-                    <span>{t.footer.telegramLabel}</span>
+                    <MessageCircle className="h-4 w-4 text-plum" />
                     <a
                       href={CONTACTS.telegramUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="font-semibold text-[#1f1a1c] hover:text-[#b76e79] hover:underline"
+                      className="font-semibold text-ink hover:text-plum-deep hover:underline"
                     >
                       {CONTACTS.telegramHandle}
                     </a>
@@ -644,50 +595,38 @@ export default function App() {
                 )}
                 {CONTACTS.phoneHref && (
                   <li className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-[#b76e79]" />
-                    <span>{t.footer.phoneLabel}</span>
+                    <Phone className="h-4 w-4 text-plum" />
                     <a
                       href={CONTACTS.phoneHref}
-                      className="font-semibold text-[#1f1a1c] tabular-nums hover:text-[#b76e79] hover:underline"
+                      className="font-semibold text-ink tabular-nums hover:text-plum-deep hover:underline"
                     >
                       {CONTACTS.phoneDisplay}
                     </a>
                   </li>
                 )}
                 <li className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-[#b76e79]" />
+                  <MapPin className="h-4 w-4 text-plum" />
                   <span>{t.footer.cityDisplay}</span>
                 </li>
               </ul>
             </div>
-
-            {/* Legal Links */}
             <div className="md:col-span-3">
-              <div className="text-xs font-bold tracking-wide text-[#1f1a1c]">
-                {t.footer.legalTitle}
-              </div>
-              <ul className="mt-3 space-y-2 text-sm text-[#5c5256]">
+              <div className="eyebrow">{t.footer.legalTitle}</div>
+              <ul className="mt-3 space-y-2 text-sm text-muted">
                 <li>
-                  <a
-                    href={LEGAL.offerUrl(lang)}
-                    className="hover:text-[#b76e79] hover:underline"
-                  >
+                  <a href={LEGAL.offerUrl(lang)} className="hover:text-plum-deep hover:underline">
                     {t.footer.offerLink}
                   </a>
                 </li>
                 <li>
-                  <a
-                    href={LEGAL.privacyUrl(lang)}
-                    className="hover:text-[#b76e79] hover:underline"
-                  >
+                  <a href={LEGAL.privacyUrl(lang)} className="hover:text-plum-deep hover:underline">
                     {t.footer.privacyLink}
                   </a>
                 </li>
               </ul>
             </div>
           </div>
-
-          <div className="mt-10 border-t border-[#f2ebe7] pt-6 text-xs text-[#7a6d71]">
+          <div className="mt-6 border-t border-white/70 pt-5 text-[11px] font-semibold uppercase tracking-[0.12em] text-soft">
             © {new Date().getFullYear()} {t.brandName}. {t.footer.copyright}
           </div>
         </div>

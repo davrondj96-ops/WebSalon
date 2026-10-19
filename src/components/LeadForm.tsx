@@ -198,20 +198,16 @@ export const LeadForm: React.FC<LeadFormProps> = ({
   );
 
   return (
-    <section
-      id="lead"
-      className="mx-auto max-w-6xl scroll-mt-20 px-4 py-14 sm:px-6 lg:px-8 lg:py-20"
-    >
-      <div className="mx-auto max-w-3xl rounded-2xl border border-[#ece3de] bg-white p-6 shadow-[0_16px_44px_-16px_rgba(31,26,28,0.08)] sm:p-10 lg:p-12">
+    <div id="lead" className="glass rounded-[28px] p-6 sm:p-8 lg:p-10">
         {submittedSuccess ? (
           <div className="py-6 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#b76e79]/15 text-[#b76e79]">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#8a6fd1]/15 text-[#8a6fd1]">
               <CheckCircle2 className="h-8 w-8" />
             </div>
-            <h2 className="mt-5 text-2xl font-extrabold tracking-tight text-[#1f1a1c] [text-wrap:balance] sm:text-3xl">
+            <h2 className="mt-5 font-display text-3xl font-semibold leading-tight text-[#241b3a] [text-wrap:balance] sm:text-4xl">
               {t.successTitle}
             </h2>
-            <p className="mx-auto mt-3 max-w-lg text-base text-[#5c5256]">
+            <p className="mx-auto mt-3 max-w-lg text-base text-[#625679]">
               {t.successSubtitle}
             </p>
             <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -220,7 +216,7 @@ export const LeadForm: React.FC<LeadFormProps> = ({
                 href={CONTACTS.telegramUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-[#b76e79] px-7 py-3.5 text-base font-bold text-white shadow-sm transition-colors hover:bg-[#a35c67] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b76e79] whitespace-nowrap shrink-0"
+                className="btn-primary min-h-[48px] px-7 py-3.5 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8a6fd1] whitespace-nowrap shrink-0"
               >
                 <MessageCircle className="h-5 w-5" />
                 <span>{t.telegramCta}</span>
@@ -235,7 +231,7 @@ export const LeadForm: React.FC<LeadFormProps> = ({
                   setMessage('');
                   setBranchesInput('');
                 }}
-                className="inline-flex min-h-[48px] items-center justify-center rounded-2xl border border-[#dfd4ce] bg-[#faf7f5] px-6 py-3.5 text-sm font-semibold text-[#3d3538] transition-colors hover:border-[#b76e79] hover:text-[#b76e79] whitespace-nowrap shrink-0"
+                className="btn-ghost min-h-[48px] px-6 py-3.5 text-sm whitespace-nowrap shrink-0"
               >
                 {t.sendAnother}
               </button>
@@ -244,11 +240,11 @@ export const LeadForm: React.FC<LeadFormProps> = ({
         ) : (
           <>
             <div className="max-w-xl">
-              <p className="text-sm font-semibold text-[#b76e79]">{t.eyebrow}</p>
-              <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-[#1f1a1c] [text-wrap:balance] sm:text-3xl">
+              <p className="eyebrow">{t.eyebrow}</p>
+              <h2 className="mt-3 font-display text-3xl font-semibold uppercase leading-[1.05] tracking-tight text-[#241b3a] [text-wrap:balance] sm:text-4xl">
                 {t.title}
               </h2>
-              <p className="mt-2.5 text-sm leading-relaxed text-[#5c5256] sm:text-base">
+              <p className="mt-2.5 text-sm leading-relaxed text-[#625679] sm:text-base">
                 {t.subtitle}
               </p>
             </div>
@@ -259,7 +255,7 @@ export const LeadForm: React.FC<LeadFormProps> = ({
                   role="alert"
                   className="flex items-start gap-3 rounded-xl border border-[#d97782] bg-[#fdf2f4] p-4 text-sm font-medium text-[#8c2d38]"
                 >
-                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-[#b76e79]" />
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-[#8a6fd1]" />
                   <div className="flex-1">
                     <span>{errorMessage}</span>
                     {errorMessage === t.errors.DEFAULT && CONTACTS.telegramUrl && (
@@ -268,7 +264,7 @@ export const LeadForm: React.FC<LeadFormProps> = ({
                           href={CONTACTS.telegramUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 font-bold text-[#b76e79] underline hover:text-[#8f4c57]"
+                          className="inline-flex items-center gap-1.5 font-bold text-[#8a6fd1] underline hover:text-[#5b3fa8]"
                         >
                           <MessageCircle className="h-4 w-4" />
                           <span>{t.telegramCta}</span>
@@ -284,9 +280,9 @@ export const LeadForm: React.FC<LeadFormProps> = ({
                 <div>
                   <label
                     htmlFor="lead-salon-name"
-                    className="block text-xs font-bold text-[#1f1a1c]"
+                    className="block text-xs font-bold text-[#241b3a]"
                   >
-                    {t.salonNameLabel} <span className="text-[#b76e79]">*</span>
+                    {t.salonNameLabel} <span className="text-[#8a6fd1]">*</span>
                   </label>
                   <input
                     id="lead-salon-name"
@@ -298,7 +294,7 @@ export const LeadForm: React.FC<LeadFormProps> = ({
                       if (errorMessage) setErrorMessage(null);
                     }}
                     placeholder={t.salonNamePlaceholder}
-                    className="mt-1.5 w-full rounded-xl border border-[#dfd4ce] bg-[#faf7f5] px-4 py-3 text-sm text-[#1f1a1c] placeholder-[#9c8f93] transition-colors focus:border-[#b76e79] focus:bg-white focus:outline-none"
+                    className="field mt-1.5"
                   />
                 </div>
 
@@ -306,9 +302,9 @@ export const LeadForm: React.FC<LeadFormProps> = ({
                 <div>
                   <label
                     htmlFor="lead-phone"
-                    className="block text-xs font-bold text-[#1f1a1c]"
+                    className="block text-xs font-bold text-[#241b3a]"
                   >
-                    {t.phoneLabel} <span className="text-[#b76e79]">*</span>
+                    {t.phoneLabel} <span className="text-[#8a6fd1]">*</span>
                   </label>
                   <input
                     id="lead-phone"
@@ -318,7 +314,7 @@ export const LeadForm: React.FC<LeadFormProps> = ({
                     value={phone}
                     onChange={handlePhoneChange}
                     placeholder={t.phonePlaceholder}
-                    className="mt-1.5 w-full rounded-xl border border-[#dfd4ce] bg-[#faf7f5] px-4 py-3 text-sm font-medium text-[#1f1a1c] tabular-nums placeholder-[#9c8f93] transition-colors focus:border-[#b76e79] focus:bg-white focus:outline-none"
+                    className="field mt-1.5 font-medium tabular-nums"
                   />
                 </div>
 
@@ -326,7 +322,7 @@ export const LeadForm: React.FC<LeadFormProps> = ({
                 <div>
                   <label
                     htmlFor="lead-owner-name"
-                    className="block text-xs font-bold text-[#1f1a1c]"
+                    className="block text-xs font-bold text-[#241b3a]"
                   >
                     {t.ownerNameLabel}
                   </label>
@@ -336,7 +332,7 @@ export const LeadForm: React.FC<LeadFormProps> = ({
                     value={ownerName}
                     onChange={(e) => setOwnerName(e.target.value)}
                     placeholder={t.ownerNamePlaceholder}
-                    className="mt-1.5 w-full rounded-xl border border-[#dfd4ce] bg-[#faf7f5] px-4 py-3 text-sm text-[#1f1a1c] placeholder-[#9c8f93] transition-colors focus:border-[#b76e79] focus:bg-white focus:outline-none"
+                    className="field mt-1.5"
                   />
                 </div>
 
@@ -344,7 +340,7 @@ export const LeadForm: React.FC<LeadFormProps> = ({
                 <div>
                   <label
                     htmlFor="lead-city"
-                    className="block text-xs font-bold text-[#1f1a1c]"
+                    className="block text-xs font-bold text-[#241b3a]"
                   >
                     {t.cityLabel}
                   </label>
@@ -354,7 +350,7 @@ export const LeadForm: React.FC<LeadFormProps> = ({
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
                     placeholder={t.cityPlaceholder}
-                    className="mt-1.5 w-full rounded-xl border border-[#dfd4ce] bg-[#faf7f5] px-4 py-3 text-sm text-[#1f1a1c] placeholder-[#9c8f93] transition-colors focus:border-[#b76e79] focus:bg-white focus:outline-none"
+                    className="field mt-1.5"
                   />
                 </div>
 
@@ -362,7 +358,7 @@ export const LeadForm: React.FC<LeadFormProps> = ({
                 <div>
                   <label
                     htmlFor="lead-masters"
-                    className="block text-xs font-bold text-[#1f1a1c]"
+                    className="block text-xs font-bold text-[#241b3a]"
                   >
                     {t.mastersLabel}
                   </label>
@@ -377,7 +373,7 @@ export const LeadForm: React.FC<LeadFormProps> = ({
                       if (errorMessage) setErrorMessage(null);
                     }}
                     placeholder={t.mastersPlaceholder}
-                    className="mt-1.5 w-full rounded-xl border border-[#dfd4ce] bg-[#faf7f5] px-4 py-3 text-sm text-[#1f1a1c] tabular-nums placeholder-[#9c8f93] transition-colors focus:border-[#b76e79] focus:bg-white focus:outline-none"
+                    className="field mt-1.5 tabular-nums"
                   />
                 </div>
 
@@ -385,7 +381,7 @@ export const LeadForm: React.FC<LeadFormProps> = ({
                 <div>
                   <label
                     htmlFor="lead-branches"
-                    className="block text-xs font-bold text-[#1f1a1c]"
+                    className="block text-xs font-bold text-[#241b3a]"
                   >
                     {t.branchesLabel}
                   </label>
@@ -400,7 +396,7 @@ export const LeadForm: React.FC<LeadFormProps> = ({
                       if (errorMessage) setErrorMessage(null);
                     }}
                     placeholder={t.branchesPlaceholder}
-                    className="mt-1.5 w-full rounded-xl border border-[#dfd4ce] bg-[#faf7f5] px-4 py-3 text-sm text-[#1f1a1c] tabular-nums placeholder-[#9c8f93] transition-colors focus:border-[#b76e79] focus:bg-white focus:outline-none"
+                    className="field mt-1.5 tabular-nums"
                   />
                 </div>
 
@@ -408,7 +404,7 @@ export const LeadForm: React.FC<LeadFormProps> = ({
                 <div>
                   <label
                     htmlFor="lead-plan"
-                    className="block text-xs font-bold text-[#1f1a1c]"
+                    className="block text-xs font-bold text-[#241b3a]"
                   >
                     {t.planLabel}
                   </label>
@@ -416,7 +412,7 @@ export const LeadForm: React.FC<LeadFormProps> = ({
                     id="lead-plan"
                     value={selectedPlanCode}
                     onChange={(e) => onChangeSelectedPlan(e.target.value)}
-                    className="mt-1.5 w-full rounded-xl border border-[#dfd4ce] bg-[#faf7f5] px-4 py-3 text-sm text-[#1f1a1c] transition-colors focus:border-[#b76e79] focus:bg-white focus:outline-none"
+                    className="field mt-1.5"
                   >
                     <option value="">{t.planUnknownOption}</option>
                     {sortedPlans.map((plan) => (
@@ -431,13 +427,13 @@ export const LeadForm: React.FC<LeadFormProps> = ({
               {estimate && (
                 <div
                   aria-live="polite"
-                  className="flex items-start gap-3 rounded-xl bg-[#faf7f5] p-4 text-sm text-[#5c5256]"
+                  className="flex items-start gap-3 glass-tile rounded-xl p-4 text-sm text-[#625679]"
                 >
-                  <Calculator className="mt-0.5 h-4 w-4 shrink-0 text-[#b76e79]" aria-hidden="true" />
+                  <Calculator className="mt-0.5 h-4 w-4 shrink-0 text-[#8a6fd1]" aria-hidden="true" />
                   {estimate.fitsMasters && estimate.fitsBranches ? (
                     <div className="tabular-nums">
-                      <span className="font-semibold text-[#1f1a1c]">{t.estimateLabel}: </span>
-                      <span className="font-bold text-[#1f1a1c]">
+                      <span className="font-semibold text-[#241b3a]">{t.estimateLabel}: </span>
+                      <span className="font-bold text-[#241b3a]">
                         {formatMoney(estimate.monthly, estimate.currency, lang)}
                       </span>{' '}
                       {t.estimatePerMonth}
@@ -460,7 +456,7 @@ export const LeadForm: React.FC<LeadFormProps> = ({
               <div>
                 <label
                   htmlFor="lead-message"
-                  className="block text-xs font-bold text-[#1f1a1c]"
+                  className="block text-xs font-bold text-[#241b3a]"
                 >
                   {t.messageLabel}
                 </label>
@@ -470,7 +466,7 @@ export const LeadForm: React.FC<LeadFormProps> = ({
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder={t.messagePlaceholder}
-                  className="mt-1.5 w-full rounded-xl border border-[#dfd4ce] bg-[#faf7f5] px-4 py-3 text-sm text-[#1f1a1c] placeholder-[#9c8f93] transition-colors focus:border-[#b76e79] focus:bg-white focus:outline-none"
+                  className="field mt-1.5"
                 />
               </div>
 
@@ -479,18 +475,18 @@ export const LeadForm: React.FC<LeadFormProps> = ({
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex min-h-[50px] w-full items-center justify-center gap-2 rounded-2xl bg-[#b76e79] px-7 py-3.5 text-base font-bold text-white shadow-sm transition-colors hover:bg-[#a35c67] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b76e79] disabled:cursor-not-allowed disabled:opacity-60 whitespace-nowrap shrink-0"
+                  className="btn-primary flex min-h-[50px] w-full px-7 py-3.5 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#8a6fd1] disabled:cursor-not-allowed disabled:opacity-60 whitespace-nowrap shrink-0"
                 >
                   <Send className="h-4 w-4" />
                   <span>{submitting ? t.submittingButton : t.submitButton}</span>
                 </button>
-                <p className="mt-3 text-center text-xs text-[#7a6d71]">
+                <p className="mt-3 text-center text-xs text-[#7d7394]">
                   {t.privacyNotePrefix}
                   <a
                     href={LEGAL.privacyUrl(lang)}
                     target="_blank"
                     rel="noopener"
-                    className="underline hover:text-[#b76e79]"
+                    className="underline hover:text-[#8a6fd1]"
                   >
                     {t.privacyNoteLink}
                   </a>
@@ -500,7 +496,6 @@ export const LeadForm: React.FC<LeadFormProps> = ({
             </form>
           </>
         )}
-      </div>
-    </section>
+    </div>
   );
 };
