@@ -1,11 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-  DEMO_PLANS,
-  SiteBanner,
-  SitePlan,
-  isSupabaseConfigured,
-  supabase,
-} from './lib/supabase';
+import { SiteBanner, SitePlan, supabase } from './lib/supabase';
 import { Language, translations } from './i18n/translations';
 import { HeroBannerSlider } from './components/HeroBannerSlider';
 import {
@@ -15,6 +9,7 @@ import {
 } from './components/PhoneMockups';
 import { PlansAndCalculator } from './components/PlansAndCalculator';
 import { LeadForm } from './components/LeadForm';
+import { CONTACTS, LEGAL } from './config';
 import {
   Check,
   ChevronDown,
@@ -23,7 +18,15 @@ import {
   MessageCircle,
   Phone,
   MapPin,
+  Sparkles,
+  Scissors,
+  Brush,
+  Shirt,
+  Store,
+  Gem,
 } from 'lucide-react';
+
+const SEGMENT_ICONS = [Sparkles, Scissors, Scissors, Gem, Shirt, Brush];
 
 const LANG_STORAGE_KEY = 'insidefire_lang';
 
@@ -49,11 +52,11 @@ export default function App() {
   const [banners, setBanners] = useState<SiteBanner[]>([]);
   const [loadingPlans, setLoadingPlans] = useState<boolean>(true);
   const [loadingBanners, setLoadingBanners] = useState<boolean>(true);
-  const [isDemoMode, setIsDemoMode] = useState<boolean>(false);
 
   // Lead form prefill states
   const [selectedPlanCode, setSelectedPlanCode] = useState<string>('');
   const [prefilledMasters, setPrefilledMasters] = useState<number | null>(null);
+  const [prefilledBranches, setPrefilledBranches] = useState<number | null>(null);
 
   // FAQ accordion state
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
@@ -94,49 +97,7 @@ export default function App() {
       setLoadingPlans(true);
       setLoadingBanners(true);
 
-      if (!isSupabaseConfigured) {
-        // Still attempt RPC in case default URL has public anon access or fail cleanly
-        try {
-          const [plansRes, bannersRes] = await Promise.allSettled([
-            supabase.rpc('site_plans'),
-            supabase.rpc('site_banners'),
-          ]);
-
-          if (!isMounted) return;
-
-          if (
-            plansRes.status === 'fulfilled' &&
-            !plansRes.value.error &&
-            Array.isArray(plansRes.value.data) &&
-            plansRes.value.data.length > 0
-          ) {
-            setPlans(plansRes.value.data as SitePlan[]);
-          } else {
-            setPlans([]);
-          }
-
-          if (
-            bannersRes.status === 'fulfilled' &&
-            !bannersRes.value.error &&
-            Array.isArray(bannersRes.value.data)
-          ) {
-            setBanners(bannersRes.value.data as SiteBanner[]);
-          } else {
-            setBanners([]);
-          }
-        } catch {
-          if (!isMounted) return;
-          setPlans([]);
-          setBanners([]);
-        } finally {
-          if (isMounted) {
-            setLoadingPlans(false);
-            setLoadingBanners(false);
-          }
-        }
-        return;
-      }
-
+      // allSettled не бросает исключений: при сбое сети покажем «цены уточняйте у менеджера»
       const [plansRes, bannersRes] = await Promise.allSettled([
         supabase.rpc('site_plans'),
         supabase.rpc('site_banners'),
@@ -183,25 +144,22 @@ export default function App() {
     }
   };
 
-  const handleSelectPlanForLead = (planCode: string, mastersCount?: number) => {
+  const handleSelectPlanForLead = (
+    planCode: string,
+    mastersCount?: number,
+    branchesCount?: number
+  ) => {
     setSelectedPlanCode(planCode);
     if (typeof mastersCount === 'number') {
       setPrefilledMasters(mastersCount);
     }
+    if (typeof branchesCount === 'number') {
+      setPrefilledBranches(branchesCount);
+    }
     handleScrollToSection('#lead');
   };
 
-  const handleToggleDemoMode = () => {
-    if (isDemoMode) {
-      setIsDemoMode(false);
-      setPlans([]);
-    } else {
-      setIsDemoMode(true);
-      setPlans(DEMO_PLANS);
-    }
-  };
-
-  const activePlans = isDemoMode ? DEMO_PLANS : plans;
+  const activePlans = plans;
 
   return (
     <div className="min-h-screen bg-[#faf7f5] text-[#1f1a1c]">
@@ -411,6 +369,36 @@ export default function App() {
           </div>
         </section>
 
+        {/* 3b. Segments (Для кого) */}
+        <section className="mx-auto max-w-6xl px-4 pb-4 sm:px-6 lg:px-8">
+          <div className="max-w-2xl">
+            <p className="text-sm font-semibold text-[#b76e79]">{t.segments.eyebrow}</p>
+            <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-[#1f1a1c] [text-wrap:balance] sm:text-4xl">
+              {t.segments.title}
+            </h2>
+            <p className="mt-3 text-base text-[#5c5256]">{t.segments.subtitle}</p>
+          </div>
+          <ul className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {t.segments.items.map((item, idx) => {
+              const Icon = SEGMENT_ICONS[idx] ?? Store;
+              return (
+                <li
+                  key={idx}
+                  className="flex gap-4 rounded-2xl border border-[#ece3de] bg-white p-5 shadow-[0_6px_20px_-10px_rgba(31,26,28,0.05)]"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#b76e79]/10 text-[#b76e79]">
+                    <Icon className="h-5 w-5" aria-hidden="true" />
+                  </span>
+                  <div>
+                    <h3 className="text-base font-bold text-[#1f1a1c]">{item.title}</h3>
+                    <p className="mt-1 text-sm leading-relaxed text-[#5c5256]">{item.description}</p>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+
         {/* 4. What the Salon Gets (Что получает салон — 3 карточки) */}
         <section
           id="features"
@@ -556,8 +544,6 @@ export default function App() {
           lang={lang}
           plans={activePlans}
           loading={loadingPlans}
-          isDemoMode={isDemoMode}
-          onToggleDemoMode={handleToggleDemoMode}
           onSelectPlanForLead={handleSelectPlanForLead}
           onScrollToLead={() => handleScrollToSection('#lead')}
         />
@@ -617,6 +603,7 @@ export default function App() {
           plans={activePlans}
           selectedPlanCode={selectedPlanCode}
           prefilledMasters={prefilledMasters}
+          prefilledBranches={prefilledBranches}
           onChangeSelectedPlan={setSelectedPlanCode}
         />
       </main>
@@ -641,28 +628,32 @@ export default function App() {
                 {t.footer.contactsTitle}
               </div>
               <ul className="mt-3 space-y-2.5 text-sm text-[#5c5256]">
-                <li className="flex items-center gap-2">
-                  <MessageCircle className="h-4 w-4 text-[#b76e79]" />
-                  <span>{t.footer.telegramLabel}</span>
-                  <a
-                    href={t.footer.telegramUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-semibold text-[#1f1a1c] hover:text-[#b76e79] hover:underline"
-                  >
-                    {t.footer.telegramHandle}
-                  </a>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-[#b76e79]" />
-                  <span>{t.footer.phoneLabel}</span>
-                  <a
-                    href={t.footer.phoneHref}
-                    className="font-semibold text-[#1f1a1c] tabular-nums hover:text-[#b76e79] hover:underline"
-                  >
-                    {t.footer.phoneDisplay}
-                  </a>
-                </li>
+                {CONTACTS.telegramUrl && (
+                  <li className="flex items-center gap-2">
+                    <MessageCircle className="h-4 w-4 text-[#b76e79]" />
+                    <span>{t.footer.telegramLabel}</span>
+                    <a
+                      href={CONTACTS.telegramUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-semibold text-[#1f1a1c] hover:text-[#b76e79] hover:underline"
+                    >
+                      {CONTACTS.telegramHandle}
+                    </a>
+                  </li>
+                )}
+                {CONTACTS.phoneHref && (
+                  <li className="flex items-center gap-2">
+                    <Phone className="h-4 w-4 text-[#b76e79]" />
+                    <span>{t.footer.phoneLabel}</span>
+                    <a
+                      href={CONTACTS.phoneHref}
+                      className="font-semibold text-[#1f1a1c] tabular-nums hover:text-[#b76e79] hover:underline"
+                    >
+                      {CONTACTS.phoneDisplay}
+                    </a>
+                  </li>
+                )}
                 <li className="flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-[#b76e79]" />
                   <span>{t.footer.cityDisplay}</span>
@@ -678,7 +669,7 @@ export default function App() {
               <ul className="mt-3 space-y-2 text-sm text-[#5c5256]">
                 <li>
                   <a
-                    href="#"
+                    href={LEGAL.offerUrl(lang)}
                     className="hover:text-[#b76e79] hover:underline"
                   >
                     {t.footer.offerLink}
@@ -686,7 +677,7 @@ export default function App() {
                 </li>
                 <li>
                   <a
-                    href="#"
+                    href={LEGAL.privacyUrl(lang)}
                     className="hover:text-[#b76e79] hover:underline"
                   >
                     {t.footer.privacyLink}

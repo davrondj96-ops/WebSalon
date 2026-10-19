@@ -4,19 +4,19 @@ import {
   KNOWN_FEATURE_CODES,
   KnownFeatureCode,
   Language,
+  fill,
   formatMoney,
   isKnownFeature,
   translations,
 } from '../i18n/translations';
-import { Check, ArrowRight, Calculator, Eye } from 'lucide-react';
+import { estimatePlan, planDescription, planName, recommendPlan } from '../lib/pricing';
+import { Check, ArrowRight, Calculator, AlertTriangle } from 'lucide-react';
 
 interface PlansAndCalculatorProps {
   lang: Language;
   plans: SitePlan[];
   loading: boolean;
-  isDemoMode: boolean;
-  onToggleDemoMode: () => void;
-  onSelectPlanForLead: (planCode: string, mastersCount?: number) => void;
+  onSelectPlanForLead: (planCode: string, mastersCount?: number, branchesCount?: number) => void;
   onScrollToLead: () => void;
 }
 
@@ -24,8 +24,6 @@ export const PlansAndCalculator: React.FC<PlansAndCalculatorProps> = ({
   lang,
   plans,
   loading,
-  isDemoMode,
-  onToggleDemoMode,
   onSelectPlanForLead,
   onScrollToLead,
 }) => {
@@ -77,32 +75,16 @@ export const PlansAndCalculator: React.FC<PlansAndCalculatorProps> = ({
 
   const calculation = useMemo(() => {
     if (!activeCalcPlan) return null;
-    const base = Number(activeCalcPlan.price_monthly) || 0;
-    const extraMastersCount =
-      activeCalcPlan.max_masters === null
-        ? 0
-        : Math.max(0, masters - activeCalcPlan.max_masters);
-    const extraBranchesCount =
-      activeCalcPlan.max_branches === null
-        ? 0
-        : Math.max(0, branches - activeCalcPlan.max_branches);
-
-    const extraMastersCost =
-      extraMastersCount * (Number(activeCalcPlan.extra_master_price) || 0);
-    const extraBranchesCost =
-      extraBranchesCount * (Number(activeCalcPlan.extra_branch_price) || 0);
-
-    const monthlyTotal = base + extraMastersCost + extraBranchesCost;
-    const setupFee = Number(activeCalcPlan.setup_fee) || 0;
-
-    return {
-      monthlyTotal,
-      setupFee,
-      extraMastersCount,
-      extraBranchesCount,
-      currency: activeCalcPlan.currency || 'UZS',
-    };
+    return estimatePlan(activeCalcPlan, masters, branches);
   }, [activeCalcPlan, masters, branches]);
+
+  // Если выбранный тариф не рассчитан на столько мастеров/филиалов —
+  // предлагаем первый подходящий, а не считаем «доплату 0».
+  const fits = calculation ? calculation.fitsMasters && calculation.fitsBranches : true;
+  const recommended = useMemo(
+    () => (fits ? null : recommendPlan(sortedPlans, masters, branches)),
+    [fits, sortedPlans, masters, branches]
+  );
 
   const popularIndex =
     sortedPlans.length > 1 ? Math.floor(sortedPlans.length / 2) : -1;
@@ -162,32 +144,11 @@ export const PlansAndCalculator: React.FC<PlansAndCalculatorProps> = ({
                 <span>{t.fallbackButton}</span>
                 <ArrowRight className="h-4 w-4" />
               </button>
-              <button
-                type="button"
-                onClick={onToggleDemoMode}
-                className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-2xl border border-[#dfd4ce] bg-[#faf7f5] px-5 py-3 text-sm font-semibold text-[#3d3538] transition-colors hover:border-[#b76e79] hover:text-[#b76e79] focus-visible:outline-2 focus-visible:outline-[#b76e79] whitespace-nowrap shrink-0"
-              >
-                <Eye className="h-4 w-4" />
-                <span>{t.demoPreviewButton}</span>
-              </button>
             </div>
           </div>
         </div>
       ) : (
         <>
-          {isDemoMode && (
-            <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#e6d6d9] bg-[#f8eff1] px-4 py-2.5 text-xs text-[#694248]">
-              <span>{t.demoNotice}</span>
-              <button
-                type="button"
-                onClick={onToggleDemoMode}
-                className="font-bold text-[#b76e79] underline hover:text-[#8f4c57]"
-              >
-                {t.demoHideButton}
-              </button>
-            </div>
-          )}
-
           {/* Tariff Cards: Horizontal snap scroll on mobile, 3-column grid on desktop */}
           <div className="mt-10 flex snap-x snap-mandatory gap-5 overflow-x-auto pb-4 md:grid md:grid-cols-3 md:gap-6 md:overflow-visible md:pb-0">
             {sortedPlans.map((plan, idx) => {
@@ -209,7 +170,7 @@ export const PlansAndCalculator: React.FC<PlansAndCalculatorProps> = ({
                     {/* Card Header & Popular Label */}
                     <div className="flex items-start justify-between gap-3">
                       <h3 className="text-xl font-extrabold text-[#1f1a1c]">
-                        {plan.name}
+                        {planName(plan, lang)}
                       </h3>
                       {isPopular && (
                         <span className="text-xs font-bold tracking-wide text-[#b76e79] whitespace-nowrap shrink-0">
@@ -218,16 +179,16 @@ export const PlansAndCalculator: React.FC<PlansAndCalculatorProps> = ({
                       )}
                     </div>
 
-                    {plan.description && (
+                    {planDescription(plan, lang) && (
                       <p className="mt-2 text-sm leading-relaxed text-[#5c5256]">
-                        {plan.description}
+                        {planDescription(plan, lang)}
                       </p>
                     )}
 
                     {/* Monthly Price & Setup Fee */}
                     <div className="mt-5 border-b border-[#f2ebe7] pb-5">
-                      <div className="flex items-baseline gap-1.5">
-                        <span className="text-3xl font-extrabold tracking-tight text-[#1f1a1c] tabular-nums sm:text-4xl">
+                      <div className="flex flex-wrap items-baseline gap-x-1.5">
+                        <span className="text-3xl font-extrabold tracking-tight text-[#1f1a1c] tabular-nums">
                           {formatMoney(plan.price_monthly, plan.currency, lang)}
                         </span>
                         <span className="text-sm font-medium text-[#6e6266]">
@@ -379,7 +340,7 @@ export const PlansAndCalculator: React.FC<PlansAndCalculatorProps> = ({
                                 : 'border border-[#e4d9d3] bg-[#faf7f5] text-[#3d3538] hover:border-[#b76e79]'
                             }`}
                           >
-                            {plan.name}
+                            {planName(plan, lang)}
                           </button>
                         );
                       })}
@@ -450,26 +411,54 @@ export const PlansAndCalculator: React.FC<PlansAndCalculatorProps> = ({
 
                 {/* Right Column: Calculated Summary Box */}
                 <div className="rounded-2xl bg-[#faf7f5] p-6 lg:col-span-5 sm:p-7">
-                  <div className="text-xs font-semibold text-[#5c5256]">
-                    {tc.monthlyTotalLabel} ({activeCalcPlan.name})
-                  </div>
-                  <div className="mt-2 text-3xl font-extrabold tracking-tight text-[#1f1a1c] tabular-nums sm:text-4xl">
-                    {formatMoney(
-                      calculation.monthlyTotal,
-                      calculation.currency,
-                      lang
-                    )}
-                  </div>
-
-                  <div className="mt-2 text-xs font-semibold text-[#b76e79] tabular-nums">
-                    {calculation.setupFee > 0
-                      ? `${tc.setupOncePrefix} ${formatMoney(
-                          calculation.setupFee,
-                          calculation.currency,
-                          lang
-                        )} ${tc.setupOnceSuffix}`
-                      : tc.freeSetup}
-                  </div>
+                  {fits ? (
+                    <>
+                      <div className="text-xs font-semibold text-[#5c5256]">
+                        {tc.monthlyTotalLabel} ({planName(activeCalcPlan, lang)})
+                      </div>
+                      <div className="mt-2 text-3xl font-extrabold tracking-tight text-[#1f1a1c] tabular-nums sm:text-4xl">
+                        {formatMoney(calculation.monthly, calculation.currency, lang)}
+                      </div>
+                      <div className="mt-2 text-xs font-semibold text-[#b76e79] tabular-nums">
+                        {calculation.setup > 0
+                          ? `${tc.setupOncePrefix} ${formatMoney(
+                              calculation.setup,
+                              calculation.currency,
+                              lang
+                            )} ${tc.setupOnceSuffix}`
+                          : tc.freeSetup}
+                      </div>
+                    </>
+                  ) : (
+                    <div role="status" className="rounded-xl border border-[#e8c7cc] bg-white p-4 text-sm text-[#5c5256]">
+                      <div className="flex items-start gap-2.5">
+                        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[#b76e79]" aria-hidden="true" />
+                        <div className="space-y-1">
+                          {!calculation.fitsMasters && (
+                            <p className="font-semibold text-[#1f1a1c]">
+                              {fill(tc.notFitMasters, {
+                                plan: planName(activeCalcPlan, lang),
+                                max: activeCalcPlan.max_masters ?? '',
+                              })}
+                            </p>
+                          )}
+                          {!calculation.fitsBranches && (
+                            <p className="font-semibold text-[#1f1a1c]">
+                              {fill(tc.notFitBranches, {
+                                plan: planName(activeCalcPlan, lang),
+                                max: activeCalcPlan.max_branches ?? '',
+                              })}
+                            </p>
+                          )}
+                          <p>
+                            {recommended
+                              ? fill(tc.recommend, { plan: planName(recommended, lang) })
+                              : tc.noPlanFits}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="mt-4 border-t border-[#e8dfd9] pt-4 text-xs leading-relaxed text-[#5c5256] tabular-nums">
                     <div>
@@ -491,12 +480,24 @@ export const PlansAndCalculator: React.FC<PlansAndCalculatorProps> = ({
 
                   <button
                     type="button"
-                    onClick={() =>
-                      onSelectPlanForLead(activeCalcPlan.code, masters)
-                    }
-                    className="mt-5 flex min-h-[46px] w-full items-center justify-center gap-2 rounded-xl bg-[#b76e79] px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-[#a35c67] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b76e79] whitespace-nowrap shrink-0"
+                    onClick={() => {
+                      if (fits) {
+                        onSelectPlanForLead(activeCalcPlan.code, masters, branches);
+                      } else if (recommended) {
+                        setCalcPlanCode(recommended.code);
+                      } else {
+                        onSelectPlanForLead('', masters, branches);
+                      }
+                    }}
+                    className="mt-5 flex min-h-[46px] w-full items-center justify-center gap-2 rounded-xl bg-[#b76e79] px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-[#a35c67] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b76e79] text-center"
                   >
-                    <span>{tc.applyCalculationCta}</span>
+                    <span>
+                      {fits
+                        ? tc.applyCalculationCta
+                        : recommended
+                          ? fill(tc.switchCta, { plan: planName(recommended, lang) })
+                          : tc.individualCta}
+                    </span>
                     <ArrowRight className="h-4 w-4" />
                   </button>
                 </div>
