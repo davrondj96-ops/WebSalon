@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { SiteBanner } from '../lib/supabase';
 import { Language, translations } from '../i18n/translations';
-import { HeroPhoneMockup } from './PhoneMockups';
+import heroPhone from '../assets/hero-phone.webp';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 
 interface HeroProps {
@@ -141,7 +141,14 @@ export const Hero: React.FC<HeroProps> = ({ lang, banners, onNavigate }) => {
           </div>
 
           <div className="relative lg:col-span-5">
-            <HeroPhoneMockup lang={lang} onBookClick={() => onNavigate('#connect')} />
+            <img
+              src={heroPhone}
+              alt={t.phoneAlt}
+              width={932}
+              height={1564}
+              fetchPriority="high"
+              className="relative mx-auto h-auto w-full max-w-[300px] drop-shadow-[0_40px_50px_rgba(58,34,120,0.35)] sm:max-w-[340px] lg:max-w-[360px]"
+            />
           </div>
         </div>
       </div>
