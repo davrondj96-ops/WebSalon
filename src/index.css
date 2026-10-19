@@ -1,15 +1,45 @@
 @import "tailwindcss";
 
-@layer base {
-  :root {
-    --font-sans: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  }
+/* Невысокие экраны ноутбуков: тарифы ужимаются, чтобы влезть в одно окно */
+@custom-variant short (@media (min-width: 1024px) and (max-height: 820px));
+@custom-variant tiny (@media (min-width: 1024px) and (max-height: 700px));
 
+@theme {
+  --font-sans: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Cormorant Garamond', 'Times New Roman', serif;
+
+  --color-ink: #241b3a;
+  --color-muted: #625679;
+  --color-soft: #8a80a0;
+  --color-plum: #8a6fd1;
+  --color-plum-deep: #6d4fc0;
+  --color-lilac: #efe9fb;
+}
+
+@layer base {
   html {
     font-family: var(--font-sans);
-    background-color: #faf7f5;
-    color: #1f1a1c;
+    color: var(--color-ink);
     scroll-behavior: smooth;
+  }
+
+  body {
+    min-height: 100vh;
+    background-color: #efe8fb;
+  }
+
+  /* Фон — отдельным фиксированным слоем: background-attachment: fixed не работает в iOS Safari */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(60rem 40rem at 85% -10%, rgba(196, 176, 245, 0.55), transparent 60%),
+      radial-gradient(50rem 36rem at -10% 30%, rgba(222, 205, 250, 0.7), transparent 60%),
+      radial-gradient(40rem 30rem at 70% 90%, rgba(205, 188, 246, 0.45), transparent 60%),
+      linear-gradient(180deg, #f6f2fd 0%, #ede5fa 55%, #e7dcf7 100%);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -24,49 +54,153 @@
   }
 }
 
-/* Custom range input styling for calculator */
-input[type="range"].rose-slider {
+@layer components {
+  /* Матовое «стекло» — основная поверхность всех панелей */
+  .glass {
+    background: rgba(255, 255, 255, 0.46);
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    box-shadow:
+      0 24px 60px -28px rgba(76, 52, 150, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    backdrop-filter: blur(18px) saturate(140%);
+  }
+
+  .glass-tile {
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 10px 30px -18px rgba(76, 52, 150, 0.25);
+  }
+
+  /* Тёмные карточки в духе «Selected projects» */
+  .velvet {
+    background:
+      radial-gradient(24rem 16rem at 90% 0%, rgba(178, 150, 255, 0.45), transparent 60%),
+      linear-gradient(160deg, #3a2a6b 0%, #2a1f4d 55%, #1f1738 100%);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 24px 50px -24px rgba(36, 22, 80, 0.55);
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-ink);
+  }
+
+  .eyebrow::before {
+    content: '✦';
+    color: var(--color-plum);
+    font-size: 0.8rem;
+  }
+
+  .accent-text {
+    background: linear-gradient(90deg, #7a5cd0 0%, #a68cf0 60%, #c4b2fa 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, #7d5fd0 0%, #a084ec 100%);
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 12px 28px -12px rgba(109, 79, 192, 0.7);
+    transition: filter 150ms ease, transform 150ms ease;
+  }
+
+  .btn-primary:hover {
+    filter: brightness(1.06);
+  }
+
+  .btn-primary:active {
+    transform: translateY(1px);
+  }
+
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    color: var(--color-ink);
+    font-weight: 600;
+    transition: background-color 150ms ease, color 150ms ease;
+  }
+
+  .btn-ghost:hover {
+    background: rgba(255, 255, 255, 0.85);
+    color: var(--color-plum-deep);
+  }
+
+  .field {
+    width: 100%;
+    border-radius: 0.9rem;
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.6);
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    color: var(--color-ink);
+    transition: border-color 150ms ease, background-color 150ms ease;
+  }
+
+  .field::placeholder {
+    color: #a49bb8;
+  }
+
+  .field:focus {
+    outline: none;
+    border-color: var(--color-plum);
+    background: rgba(255, 255, 255, 0.9);
+  }
+}
+
+/* Ползунки калькулятора */
+input[type="range"].lavender-slider {
   -webkit-appearance: none;
   appearance: none;
-  background: transparent;
+  height: 6px;
+  border-radius: 9999px;
   cursor: pointer;
 }
 
-input[type="range"].rose-slider::-webkit-slider-runnable-track {
-  height: 8px;
-  border-radius: 9999px;
-}
-
-input[type="range"].rose-slider::-webkit-slider-thumb {
+input[type="range"].lavender-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   height: 22px;
   width: 22px;
   border-radius: 50%;
-  background: #b76e79;
+  background: #8a6fd1;
   border: 3px solid #ffffff;
-  box-shadow: 0 2px 6px rgba(31, 26, 28, 0.2);
-  margin-top: -7px;
-  transition: transform 150ms cubic-bezier(0.16, 1, 0.3, 1), background-color 150ms ease;
+  box-shadow: 0 4px 12px rgba(76, 52, 150, 0.35);
+  transition: transform 150ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-input[type="range"].rose-slider:hover::-webkit-slider-thumb {
+input[type="range"].lavender-slider:hover::-webkit-slider-thumb {
   transform: scale(1.08);
-  background: #a35c67;
 }
 
-input[type="range"].rose-slider:focus-visible::-webkit-slider-thumb {
-  outline: 2px solid #b76e79;
+input[type="range"].lavender-slider:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid #8a6fd1;
   outline-offset: 2px;
 }
 
-input[type="range"].rose-slider::-moz-range-thumb {
+input[type="range"].lavender-slider::-moz-range-thumb {
   height: 22px;
   width: 22px;
   border-radius: 50%;
-  background: #b76e79;
+  background: #8a6fd1;
   border: 3px solid #ffffff;
-  box-shadow: 0 2px 6px rgba(31, 26, 28, 0.2);
-  transition: transform 150ms cubic-bezier(0.16, 1, 0.3, 1), background-color 150ms ease;
+  box-shadow: 0 4px 12px rgba(76, 52, 150, 0.35);
 }
-

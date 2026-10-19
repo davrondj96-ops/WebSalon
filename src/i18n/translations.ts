@@ -47,8 +47,11 @@ export const translations = {
     },
     brandName: 'InsideFire Beauty',
     nav: {
+      home: 'Главная',
       features: 'Возможности',
       plans: 'Тарифы',
+      calculator: 'Калькулятор',
+      forWhom: 'Для кого',
       faq: 'Вопросы',
       connectCta: 'Подключить салон',
       openMenu: 'Открыть меню',
@@ -57,6 +60,8 @@ export const translations = {
     hero: {
       badge: 'Для салонов красоты, парикмахерских, барбершопов и ателье',
       title: 'Онлайн-запись и приложение для вашего салона',
+      titleLead: 'Онлайн-запись и приложение',
+      titleAccent: 'для вашего салона',
       subtitle:
         'Клиенты записываются сами 24/7 в брендированном приложении салона, администратор ведёт расписание без путаницы в блокноте, а владелец видит выручку и итоги дня в Telegram.',
       primaryCta: 'Оставить заявку',
@@ -64,21 +69,10 @@ export const translations = {
       prevSlide: 'Предыдущий слайд',
       nextSlide: 'Следующий слайд',
       goToSlide: 'Перейти к слайду',
-    },
-    mockup: {
-      salonTitle: 'LUMIÈRE BEAUTY STUDIO',
-      salonLocation: 'Ташкент, ул. Амира Темура, 42',
-      bookButton: 'Записаться онлайн',
-      upcomingTitle: 'Свободные окна сегодня',
-      service1: 'Женская стрижка и укладка',
-      master1: 'Мастер Мадина • Топ-стилист',
-      service2: 'Маникюр с покрытием',
-      master2: 'Мастер Нигора • Нейл-мастер',
-      bonusLabel: 'Бонусный баланс клиента',
-      bonusPoints: '45 000 сум кешбэк',
-      reminderToast: 'Напоминание: запись завтра в 14:00',
+      phoneAlt: 'Приложение салона на телефоне: расписание недели, записи на сегодня и разделы',
     },
     trust: {
+      eyebrow: 'Почему InsideFire',
       items: [
         {
           title: 'Запись 24/7',
@@ -176,6 +170,8 @@ export const translations = {
       extraMasterPrefix: 'Доп. мастер:',
       extraBranchPrefix: 'Доп. филиал:',
       selectPlanButton: 'Выбрать',
+      includedLabel: 'Что входит',
+      includesPrev: 'Всё из «{plan}», плюс:',
       fallbackTitle: 'Цены уточняйте у менеджера',
       fallbackDescription:
         'Оставьте контакты вашего салона — мы подберём оптимальный тариф под количество ваших мастеров и филиалов и рассчитаем точную стоимость за 10 минут.',
@@ -254,6 +250,10 @@ export const translations = {
         },
       ],
     },
+    connect: {
+      contactsTitle: 'Свяжитесь с нами',
+      contactsText: 'Ответим на вопросы и покажем приложение с вашим логотипом.',
+    },
     lead: {
       eyebrow: 'Подключение за 1 день',
       title: 'Оставьте заявку на подключение салона',
@@ -318,8 +318,11 @@ export const translations = {
     },
     brandName: 'InsideFire Beauty',
     nav: {
+      home: 'Bosh sahifa',
       features: 'Imkoniyatlar',
       plans: "Ta'riflar",
+      calculator: 'Kalkulyator',
+      forWhom: 'Kimlar uchun',
       faq: 'Savollar',
       connectCta: 'Salonni ulash',
       openMenu: 'Menyuni ochish',
@@ -328,6 +331,8 @@ export const translations = {
     hero: {
       badge: "Go'zallik salonlari, sartaroshxonalar, barbershoplar va atelyelar uchun",
       title: 'Saloningiz uchun onlayn yozuv va mobil ilova',
+      titleLead: 'Saloningiz uchun',
+      titleAccent: 'onlayn yozuv va mobil ilova',
       subtitle:
         "Mijozlar 24/7 o'zlari bo'sh vaqtni tanlab yoziladi, administrator jadvalni tartibli yuritadi, salon egasi esa kunlik tushum va hisobotlarni Telegram'da kuzatadi.",
       primaryCta: 'Ariza qoldirish',
@@ -335,21 +340,10 @@ export const translations = {
       prevSlide: 'Oldingi slayd',
       nextSlide: 'Keyingi slayd',
       goToSlide: "Slaydga o'tish",
-    },
-    mockup: {
-      salonTitle: 'LUMIÈRE BEAUTY STUDIO',
-      salonLocation: 'Toshkent, Amir Temur shoh ko‘chasi, 42',
-      bookButton: 'Onlayn yozilish',
-      upcomingTitle: 'Bugungi bo‘sh vaqtlar',
-      service1: 'Ayollar soch turmagi va ukladka',
-      master1: 'Usta Madina • Top-stilist',
-      service2: 'Qoplamali manikyur',
-      master2: 'Usta Nigora • Neyl-usta',
-      bonusLabel: 'Mijozning bonus balansi',
-      bonusPoints: "45 000 so'm keshbek",
-      reminderToast: 'Eslatma: ertaga soat 14:00 da yozuv',
+      phoneAlt: 'Telefondagi salon ilovasi: haftalik jadval, bugungi yozuvlar va bo‘limlar',
     },
     trust: {
+      eyebrow: 'Nega InsideFire',
       items: [
         {
           title: 'Yozuv 24/7',
@@ -447,6 +441,8 @@ export const translations = {
       extraMasterPrefix: "Qo'shimcha usta:",
       extraBranchPrefix: "Qo'shimcha filial:",
       selectPlanButton: 'Tanlash',
+      includedLabel: 'Nimalar kiradi',
+      includesPrev: "«{plan}»dagi hamma narsa, qo'shimcha:",
       fallbackTitle: 'Narxlarni menejerdan aniqlashtiring',
       fallbackDescription:
         "Saloningiz ma'lumotlarini qoldiring — ustalar va filiallar soniga qarab eng qulay ta'rifni 10 daqiqada hisoblab beramiz.",
@@ -524,6 +520,10 @@ export const translations = {
           a: "Salonni sozlash va onlayn yozuvni ishga tushirish atigi 1 ish kunini oladi. Sizdan faqat xizmatlar ro'yxati, narxlar, ustalar ismi va logotip kerak bo'ladi.",
         },
       ],
+    },
+    connect: {
+      contactsTitle: "Biz bilan bog'laning",
+      contactsText: "Savollaringizga javob beramiz va ilovani logotipingiz bilan ko'rsatamiz.",
     },
     lead: {
       eyebrow: '1 kunda ishga tushirish',
