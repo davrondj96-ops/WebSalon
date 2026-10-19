@@ -12,7 +12,7 @@ function absoluteOgUrls(siteUrl: string): Plugin {
     transformIndexHtml(html) {
       if (!base) return html;
       return html
-        .replaceAll('content="/og.png"', `content="${base}/og.png"`)
+        .replace(/content="[^"]*\/og\.png"/g, `content="${base}/og.png"`)
         .replace('<meta property="og:type"', `<meta property="og:url" content="${base}/" />\n    <meta property="og:type"`);
     },
   };
@@ -21,6 +21,8 @@ function absoluteOgUrls(siteUrl: string): Plugin {
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
   return {
+    // На GitHub Pages сайт живёт в подпапке (/WebSalon/); путь передаёт workflow.
+    base: process.env.BASE_PATH || '/',
     plugins: [react(), tailwindcss(), absoluteOgUrls(env.VITE_SITE_URL || '')],
     resolve: {
       alias: {
