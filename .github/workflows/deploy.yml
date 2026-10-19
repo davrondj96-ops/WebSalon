@@ -6,40 +6,29 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
   group: pages
   cancel-in-progress: false
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
-      - id: pages
-        uses: actions/configure-pages@v5
       - run: bun install --frozen-lockfile
       - run: bun run lint
       - run: bun run build
         env:
-          BASE_PATH: ${{ steps.pages.outputs.base_path }}/
-          VITE_SITE_URL: ${{ vars.VITE_SITE_URL || steps.pages.outputs.base_url }}
+          # Сайт открывается по адресу https://<owner>.github.io/<repo>/
+          BASE_PATH: /${{ github.event.repository.name }}/
+          VITE_SITE_URL: ${{ vars.VITE_SITE_URL || format('https://{0}.github.io/{1}', github.repository_owner, github.event.repository.name) }}
           VITE_CONTACT_TELEGRAM: ${{ vars.VITE_CONTACT_TELEGRAM }}
           VITE_CONTACT_PHONE: ${{ vars.VITE_CONTACT_PHONE }}
-      - uses: actions/upload-pages-artifact@v3
+      # Собранный сайт кладётся в ветку gh-pages, откуда его отдаёт GitHub Pages.
+      - uses: peaceiris/actions-gh-pages@v4
         with:
-          path: dist
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
