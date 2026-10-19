@@ -1,0 +1,6 @@
+{
+  "name": "InsideFire Beauty — Платформа для салонов красоты",
+  "description": "Онлайн-запись 24/7 и мобильное приложение для салонов маникюра и красоты в Узбекистане.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
