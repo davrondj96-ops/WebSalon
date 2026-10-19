@@ -20,6 +20,6 @@ export const CONTACTS = {
 };
 
 export const LEGAL = {
-  offerUrl: (lang: 'ru' | 'uz') => `/oferta.html?lang=${lang}`,
-  privacyUrl: (lang: 'ru' | 'uz') => `/privacy.html?lang=${lang}`,
+  offerUrl: (lang: 'ru' | 'uz') => `${import.meta.env.BASE_URL}oferta.html?lang=${lang}`,
+  privacyUrl: (lang: 'ru' | 'uz') => `${import.meta.env.BASE_URL}privacy.html?lang=${lang}`,
 };
