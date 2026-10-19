@@ -158,7 +158,7 @@ export const ClientRoleIllustration: React.FC<{ lang: Language }> = ({ lang }) =
           <div className="flex items-center gap-2">
             <Clock className="h-3.5 w-3.5 text-[#b76e79]" />
             <span className="font-medium text-[#1f1a1c]">
-              {lang === 'uz' ? 'Manikyur • 14:30' : 'Маникюр • 14:30'}
+              {lang === 'uz' ? 'Soch olish • 14:30' : 'Стрижка • 14:30'}
             </span>
           </div>
           <span className="flex items-center gap-1 text-[11px] font-semibold text-[#2e6f4e]">
@@ -192,7 +192,7 @@ export const AdminRoleIllustration: React.FC<{ lang: Language }> = ({ lang }) =>
             {lang === 'uz' ? 'Madina (Top)' : 'Мадина (Топ)'}
           </div>
           <div className="mt-1.5 rounded bg-[#b76e79]/15 px-2 py-1 font-medium text-[#8f4c57] tabular-nums">
-            11:00 Азиза (Гель)
+            11:00 Азиза (Окрашивание)
           </div>
           <div className="mt-1 rounded bg-[#3d3538]/10 px-2 py-1 font-medium text-[#3d3538] tabular-nums">
             13:30 Дильноза
@@ -200,10 +200,10 @@ export const AdminRoleIllustration: React.FC<{ lang: Language }> = ({ lang }) =>
         </div>
         <div className="rounded-lg bg-white p-2 shadow-2xs">
           <div className="font-bold text-[#1f1a1c]">
-            {lang === 'uz' ? 'Nigora (Nail)' : 'Нигора (Nail)'}
+            {lang === 'uz' ? 'Sardor (Barber)' : 'Сардор (Барбер)'}
           </div>
           <div className="mt-1.5 rounded bg-[#b76e79]/15 px-2 py-1 font-medium text-[#8f4c57] tabular-nums">
-            12:00 Камила (Спа)
+            12:00 Бобур (Борода)
           </div>
           <div className="mt-1 rounded border border-dashed border-[#d5c8c2] px-2 py-1 text-[#7a6d71] tabular-nums">
             15:00 {lang === 'uz' ? "Bo'sh" : 'Свободно'}

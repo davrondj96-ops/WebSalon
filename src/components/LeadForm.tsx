@@ -1,13 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { SitePlan, supabase } from '../lib/supabase';
-import { Language, translations } from '../i18n/translations';
-import { CheckCircle2, AlertCircle, Send, MessageCircle } from 'lucide-react';
+import { Language, fill, formatMoney, translations } from '../i18n/translations';
+import { estimatePlan, planName } from '../lib/pricing';
+import { CONTACTS, LEGAL } from '../config';
+import { CheckCircle2, AlertCircle, Send, MessageCircle, Calculator } from 'lucide-react';
 
 interface LeadFormProps {
   lang: Language;
   plans: SitePlan[];
   selectedPlanCode: string;
   prefilledMasters?: number | null;
+  prefilledBranches?: number | null;
   onChangeSelectedPlan: (code: string) => void;
 }
 
@@ -49,16 +52,17 @@ export const LeadForm: React.FC<LeadFormProps> = ({
   plans,
   selectedPlanCode,
   prefilledMasters,
+  prefilledBranches,
   onChangeSelectedPlan,
 }) => {
   const t = translations[lang].lead;
-  const tf = translations[lang].footer;
 
   const [salonName, setSalonName] = useState('');
   const [phone, setPhone] = useState('+998 ');
   const [ownerName, setOwnerName] = useState('');
   const [city, setCity] = useState('');
   const [mastersInput, setMastersInput] = useState<string>('');
+  const [branchesInput, setBranchesInput] = useState<string>('');
   const [message, setMessage] = useState('');
 
   const [submitting, setSubmitting] = useState(false);
@@ -71,11 +75,32 @@ export const LeadForm: React.FC<LeadFormProps> = ({
     }
   }, [prefilledMasters]);
 
+  useEffect(() => {
+    if (prefilledBranches && prefilledBranches > 0) {
+      setBranchesInput(String(prefilledBranches));
+    }
+  }, [prefilledBranches]);
+
+  // Предварительный расчёт по выбранному тарифу — та же формула, что в калькуляторе
+  // и в базе; в заявку уходят тариф, мастера и филиалы, база пересчитывает сама.
+  const estimate = useMemo(() => {
+    const plan = plans.find((p) => p.code === selectedPlanCode);
+    if (!plan) return null;
+    const m = Number(mastersInput);
+    const b = Number(branchesInput);
+    return estimatePlan(
+      plan,
+      Number.isInteger(m) && m >= 1 ? m : 1,
+      Number.isInteger(b) && b >= 1 ? b : 1
+    );
+  }, [plans, selectedPlanCode, mastersInput, branchesInput]);
+
   const mapErrorText = (rawMessage?: string): string => {
     if (!rawMessage) return t.errors.DEFAULT;
     if (rawMessage.includes('INVALID_NAME')) return t.errors.INVALID_NAME;
     if (rawMessage.includes('INVALID_PHONE')) return t.errors.INVALID_PHONE;
     if (rawMessage.includes('INVALID_MASTERS')) return t.errors.INVALID_MASTERS;
+    if (rawMessage.includes('INVALID_BRANCHES')) return t.errors.INVALID_BRANCHES;
     if (rawMessage.includes('TOO_MANY_REQUESTS')) return t.errors.TOO_MANY_REQUESTS;
     return t.errors.DEFAULT;
   };
@@ -116,6 +141,16 @@ export const LeadForm: React.FC<LeadFormProps> = ({
       parsedMasters = num;
     }
 
+    let parsedBranches: number | null = null;
+    if (branchesInput.trim().length > 0) {
+      const num = Number(branchesInput.trim());
+      if (!Number.isInteger(num) || num < 1 || num > 100) {
+        setErrorMessage(t.errors.INVALID_BRANCHES);
+        return;
+      }
+      parsedBranches = num;
+    }
+
     const searchParams = new URLSearchParams(window.location.search);
     const p_utm = {
       utm_source: searchParams.get('utm_source'),
@@ -131,6 +166,7 @@ export const LeadForm: React.FC<LeadFormProps> = ({
         p_owner_name: ownerName.trim() || null,
         p_city: city.trim() || null,
         p_masters: parsedMasters,
+        p_branches: parsedBranches,
         p_plan_code: selectedPlanCode || null,
         p_message: message.trim() || null,
         p_lang: lang,
@@ -179,8 +215,9 @@ export const LeadForm: React.FC<LeadFormProps> = ({
               {t.successSubtitle}
             </p>
             <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              {CONTACTS.telegramUrl && (
               <a
-                href={tf.telegramUrl}
+                href={CONTACTS.telegramUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-[#b76e79] px-7 py-3.5 text-base font-bold text-white shadow-sm transition-colors hover:bg-[#a35c67] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b76e79] whitespace-nowrap shrink-0"
@@ -188,6 +225,7 @@ export const LeadForm: React.FC<LeadFormProps> = ({
                 <MessageCircle className="h-5 w-5" />
                 <span>{t.telegramCta}</span>
               </a>
+              )}
               <button
                 type="button"
                 onClick={() => {
@@ -195,6 +233,7 @@ export const LeadForm: React.FC<LeadFormProps> = ({
                   setSalonName('');
                   setPhone('+998 ');
                   setMessage('');
+                  setBranchesInput('');
                 }}
                 className="inline-flex min-h-[48px] items-center justify-center rounded-2xl border border-[#dfd4ce] bg-[#faf7f5] px-6 py-3.5 text-sm font-semibold text-[#3d3538] transition-colors hover:border-[#b76e79] hover:text-[#b76e79] whitespace-nowrap shrink-0"
               >
@@ -223,10 +262,10 @@ export const LeadForm: React.FC<LeadFormProps> = ({
                   <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-[#b76e79]" />
                   <div className="flex-1">
                     <span>{errorMessage}</span>
-                    {errorMessage === t.errors.DEFAULT && (
+                    {errorMessage === t.errors.DEFAULT && CONTACTS.telegramUrl && (
                       <div className="mt-2">
                         <a
-                          href={tf.telegramUrl}
+                          href={CONTACTS.telegramUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1.5 font-bold text-[#b76e79] underline hover:text-[#8f4c57]"
@@ -342,6 +381,29 @@ export const LeadForm: React.FC<LeadFormProps> = ({
                   />
                 </div>
 
+                {/* How many branches */}
+                <div>
+                  <label
+                    htmlFor="lead-branches"
+                    className="block text-xs font-bold text-[#1f1a1c]"
+                  >
+                    {t.branchesLabel}
+                  </label>
+                  <input
+                    id="lead-branches"
+                    type="number"
+                    min={1}
+                    max={100}
+                    value={branchesInput}
+                    onChange={(e) => {
+                      setBranchesInput(e.target.value);
+                      if (errorMessage) setErrorMessage(null);
+                    }}
+                    placeholder={t.branchesPlaceholder}
+                    className="mt-1.5 w-full rounded-xl border border-[#dfd4ce] bg-[#faf7f5] px-4 py-3 text-sm text-[#1f1a1c] tabular-nums placeholder-[#9c8f93] transition-colors focus:border-[#b76e79] focus:bg-white focus:outline-none"
+                  />
+                </div>
+
                 {/* Tariff Dropdown */}
                 <div>
                   <label
@@ -359,12 +421,40 @@ export const LeadForm: React.FC<LeadFormProps> = ({
                     <option value="">{t.planUnknownOption}</option>
                     {sortedPlans.map((plan) => (
                       <option key={plan.code} value={plan.code}>
-                        {plan.name}
+                        {planName(plan, lang)}
                       </option>
                     ))}
                   </select>
                 </div>
               </div>
+
+              {estimate && (
+                <div
+                  aria-live="polite"
+                  className="flex items-start gap-3 rounded-xl bg-[#faf7f5] p-4 text-sm text-[#5c5256]"
+                >
+                  <Calculator className="mt-0.5 h-4 w-4 shrink-0 text-[#b76e79]" aria-hidden="true" />
+                  {estimate.fitsMasters && estimate.fitsBranches ? (
+                    <div className="tabular-nums">
+                      <span className="font-semibold text-[#1f1a1c]">{t.estimateLabel}: </span>
+                      <span className="font-bold text-[#1f1a1c]">
+                        {formatMoney(estimate.monthly, estimate.currency, lang)}
+                      </span>{' '}
+                      {t.estimatePerMonth}
+                      {estimate.setup > 0 && (
+                        <span>
+                          {' '}
+                          {fill(t.estimateSetup, {
+                            sum: formatMoney(estimate.setup, estimate.currency, lang),
+                          })}
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <div>{t.estimateNotFit}</div>
+                  )}
+                </div>
+              )}
 
               {/* Comment */}
               <div>
@@ -395,7 +485,16 @@ export const LeadForm: React.FC<LeadFormProps> = ({
                   <span>{submitting ? t.submittingButton : t.submitButton}</span>
                 </button>
                 <p className="mt-3 text-center text-xs text-[#7a6d71]">
-                  {t.privacyNote}
+                  {t.privacyNotePrefix}
+                  <a
+                    href={LEGAL.privacyUrl(lang)}
+                    target="_blank"
+                    rel="noopener"
+                    className="underline hover:text-[#b76e79]"
+                  >
+                    {t.privacyNoteLink}
+                  </a>
+                  {t.privacyNoteSuffix}
                 </p>
               </div>
             </form>

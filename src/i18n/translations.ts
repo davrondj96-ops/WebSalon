@@ -30,12 +30,12 @@ export function formatMoney(
 ): string {
   const formattedNumber = Math.round(amount)
     .toString()
-    .replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    .replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0');
 
   if (currency === 'USD') {
     return `$${formattedNumber}`;
   }
-  return lang === 'uz' ? `${formattedNumber} so'm` : `${formattedNumber} сум`;
+  return lang === 'uz' ? `${formattedNumber}\u00a0so'm` : `${formattedNumber}\u00a0сум`;
 }
 
 export const translations = {
@@ -43,7 +43,7 @@ export const translations = {
     seo: {
       title: 'InsideFire Beauty — Онлайн-запись и приложение для вашего салона',
       description:
-        'Платформа для салонов маникюра и красоты в Узбекистане: онлайн-запись 24/7, брендированное приложение для клиентов, расписание мастеров и оплата через Payme и Click.',
+        'Платформа для салонов красоты, парикмахерских, барбершопов, ногтевых студий и ателье в Узбекистане: онлайн-запись 24/7, брендированное приложение для клиентов, расписание мастеров и оплата через Payme и Click.',
     },
     brandName: 'InsideFire Beauty',
     nav: {
@@ -55,7 +55,7 @@ export const translations = {
       closeMenu: 'Закрыть меню',
     },
     hero: {
-      badge: 'Платформа для салонов красоты в Узбекистане',
+      badge: 'Для салонов красоты, парикмахерских, барбершопов и ателье',
       title: 'Онлайн-запись и приложение для вашего салона',
       subtitle:
         'Клиенты записываются сами 24/7 в брендированном приложении салона, администратор ведёт расписание без путаницы в блокноте, а владелец видит выручку и итоги дня в Telegram.',
@@ -66,14 +66,14 @@ export const translations = {
       goToSlide: 'Перейти к слайду',
     },
     mockup: {
-      salonTitle: 'LUMIÈRE NAIL & BEAUTY',
+      salonTitle: 'LUMIÈRE BEAUTY STUDIO',
       salonLocation: 'Ташкент, ул. Амира Темура, 42',
       bookButton: 'Записаться онлайн',
       upcomingTitle: 'Свободные окна сегодня',
-      service1: 'Маникюр + гель-лак (выравнивание)',
+      service1: 'Женская стрижка и укладка',
       master1: 'Мастер Мадина • Топ-стилист',
-      service2: 'Японский спа-маникюр и уход',
-      master2: 'Мастер Нигора • Nail-эксперт',
+      service2: 'Маникюр с покрытием',
+      master2: 'Мастер Нигора • Нейл-мастер',
       bonusLabel: 'Бонусный баланс клиента',
       bonusPoints: '45 000 сум кешбэк',
       reminderToast: 'Напоминание: запись завтра в 14:00',
@@ -90,12 +90,26 @@ export const translations = {
         },
         {
           title: '14 дней бесплатно',
-          subtitle: 'Полный доступ ко всем функциям на старте без привязки карты и предоплаты',
+          subtitle: 'Все возможности выбранного тарифа без привязки карты и предоплаты',
         },
         {
           title: 'Поддержка в Telegram',
           subtitle: 'Быстрые ответы живых специалистов на русском и узбекском языках',
         },
+      ],
+    },
+    segments: {
+      eyebrow: 'Для кого',
+      title: 'Подходит любому салону, где клиенты записываются к мастеру',
+      subtitle:
+        'Услуги, длительность, цены и мастера настраиваются под ваш бизнес — от барбершопа на два кресла до сети салонов с филиалами.',
+      items: [
+        { title: 'Салоны красоты', description: 'Несколько направлений в одном месте: волосы, ногти, брови, косметология.' },
+        { title: 'Женские парикмахерские', description: 'Стрижки, окрашивание, укладки — с разной длительностью и ценой у каждого мастера.' },
+        { title: 'Мужские парикмахерские и барбершопы', description: 'Быстрая запись к своему барберу, напоминания и повторные визиты.' },
+        { title: 'Ногтевые студии', description: 'Маникюр, педикюр, наращивание — плотное расписание без накладок.' },
+        { title: 'Ателье мод', description: 'Примерки, замеры и выдача заказов по записи — без очереди и звонков.' },
+        { title: 'И другие салоны', description: 'Брови и ресницы, косметология, массаж, SPA, тату — всё, где есть мастер и время записи.' },
       ],
     },
     whatSalonGets: {
@@ -122,8 +136,8 @@ export const translations = {
           role: '03. Владельцу',
           title: 'Умный Telegram-бот контроля',
           description:
-            'Ежедневные сводки по выручке и возвращаемости клиентов, уведомления о статусе подписки и мгновенная оплата через Payme или Click прямо со смартфона.',
-          highlights: ['Итоги дня и выручка в Telegram', 'Напоминания об оплате без блокировок', 'Оплата через Payme и Click'],
+            'Итоги дня каждый вечер: записи, выручка, новые клиенты. Напоминания о подписке и оплата через Payme или Click прямо из Telegram.',
+          highlights: ['Итоги дня и выручка в Telegram', 'Напоминания об оплате заранее', 'Оплата через Payme и Click'],
         },
       },
     },
@@ -166,9 +180,6 @@ export const translations = {
       fallbackDescription:
         'Оставьте контакты вашего салона — мы подберём оптимальный тариф под количество ваших мастеров и филиалов и рассчитаем точную стоимость за 10 минут.',
       fallbackButton: 'Оставить заявку на расчёт',
-      demoPreviewButton: 'Показать пример тарифов и калькулятора',
-      demoHideButton: 'Скрыть демо-тарифы',
-      demoNotice: 'Демо-режим тарифов (предпросмотр структуры карточек и калькулятора)',
     },
     featureNames: {
       online_booking: 'Онлайн-запись 24/7',
@@ -201,6 +212,12 @@ export const translations = {
       branchesWord: 'филиалов',
       managerHint: 'Точную цену подтвердит менеджер',
       applyCalculationCta: 'Оставить заявку с этим расчётом',
+      notFitMasters: 'Тариф «{plan}» рассчитан до {max} мастеров.',
+      notFitBranches: 'Тариф «{plan}» рассчитан до {max} филиалов.',
+      recommend: 'Под ваш размер подойдёт «{plan}».',
+      switchCta: 'Пересчитать на «{plan}»',
+      noPlanFits: 'Для салона такого размера подберём условия индивидуально — оставьте заявку.',
+      individualCta: 'Оставить заявку',
     },
     faq: {
       eyebrow: 'Ответы на вопросы',
@@ -243,22 +260,30 @@ export const translations = {
       subtitle:
         'Покажем, как будет выглядеть приложение с вашим логотипом, ответим на вопросы и откроем 14 дней бесплатного доступа.',
       salonNameLabel: 'Название салона',
-      salonNamePlaceholder: 'Например, Lumière Nail Studio',
+      salonNamePlaceholder: 'Например, Barbershop Sardor',
       phoneLabel: 'Телефон',
-      phonePlaceholder: '+998 90 123-45-67',
+      phonePlaceholder: '+998 __ ___-__-__',
       ownerNameLabel: 'Ваше имя',
       ownerNamePlaceholder: 'Как к вам обращаться',
       cityLabel: 'Город',
       cityPlaceholder: 'Ташкент, Самарканд, Бухара...',
       mastersLabel: 'Сколько мастеров',
       mastersPlaceholder: 'Например, 5',
+      branchesLabel: 'Сколько филиалов',
+      branchesPlaceholder: 'Например, 1',
+      estimateLabel: 'Предварительный расчёт',
+      estimatePerMonth: 'в месяц',
+      estimateSetup: '+ подключение {sum} один раз',
+      estimateNotFit: 'Тариф не рассчитан на такое число мастеров или филиалов — менеджер предложит подходящий.',
       planLabel: 'Тариф',
       planUnknownOption: 'Пока не знаю',
       messageLabel: 'Комментарий',
       messagePlaceholder: 'Расскажите о вашем салоне или задайте вопрос',
       submitButton: 'Отправить заявку',
       submittingButton: 'Отправляем...',
-      privacyNote: 'Нажимая кнопку, вы соглашаетесь на обработку персональных данных',
+      privacyNotePrefix: 'Нажимая кнопку, вы соглашаетесь на ',
+      privacyNoteLink: 'обработку персональных данных',
+      privacyNoteSuffix: '',
       successTitle: 'Спасибо! Мы свяжемся с вами в течение рабочего дня',
       successSubtitle:
         'Ваша заявка принята. Если хотите ускорить запуск, напишите нам в Telegram прямо сейчас.',
@@ -268,19 +293,16 @@ export const translations = {
         INVALID_NAME: 'Укажите название салона',
         INVALID_PHONE: 'Проверьте номер телефона',
         INVALID_MASTERS: 'Число мастеров — от 1 до 500',
+        INVALID_BRANCHES: 'Число филиалов — от 1 до 100',
         TOO_MANY_REQUESTS: 'Попробуйте через несколько минут',
         DEFAULT: 'Не удалось отправить. Напишите нам в Telegram',
       },
     },
     footer: {
-      tagline: 'Онлайн-запись и мобильное приложение для салонов маникюра и красоты в Узбекистане.',
+      tagline: 'Онлайн-запись и мобильное приложение для салонов красоты, парикмахерских, барбершопов и ателье в Узбекистане.',
       contactsTitle: 'Контакты',
       telegramLabel: 'Telegram:',
-      telegramHandle: '@insidefire_beauty',
-      telegramUrl: 'https://t.me/insidefire_beauty',
       phoneLabel: 'Телефон:',
-      phoneDisplay: '+998 90 123-45-67',
-      phoneHref: 'tel:+998901234567',
       cityDisplay: 'г. Ташкент, Узбекистан',
       legalTitle: 'Документы',
       offerLink: 'Договор-оферта',
@@ -292,7 +314,7 @@ export const translations = {
     seo: {
       title: 'InsideFire Beauty — Saloningiz uchun onlayn yozuv va mobil ilova',
       description:
-        "O'zbekistondagi manikyur va go'zallik salonlari uchun platforma: 24/7 onlayn yozuv, mijozlar uchun shaxsiy ilova, ustalar jadvali hamda Payme va Click orqali to'lov.",
+        "O'zbekistondagi go'zallik salonlari, sartaroshxonalar, barbershoplar, tirnoq studiyalari va atelyelar uchun platforma: 24/7 onlayn yozuv, mijozlar uchun shaxsiy ilova, ustalar jadvali hamda Payme va Click orqali to'lov.",
     },
     brandName: 'InsideFire Beauty',
     nav: {
@@ -304,7 +326,7 @@ export const translations = {
       closeMenu: 'Menyuni yopish',
     },
     hero: {
-      badge: "O'zbekiston go'zallik salonlari uchun platforma",
+      badge: "Go'zallik salonlari, sartaroshxonalar, barbershoplar va atelyelar uchun",
       title: 'Saloningiz uchun onlayn yozuv va mobil ilova',
       subtitle:
         "Mijozlar 24/7 o'zlari bo'sh vaqtni tanlab yoziladi, administrator jadvalni tartibli yuritadi, salon egasi esa kunlik tushum va hisobotlarni Telegram'da kuzatadi.",
@@ -315,14 +337,14 @@ export const translations = {
       goToSlide: "Slaydga o'tish",
     },
     mockup: {
-      salonTitle: 'LUMIÈRE NAIL & BEAUTY',
+      salonTitle: 'LUMIÈRE BEAUTY STUDIO',
       salonLocation: 'Toshkent, Amir Temur shoh ko‘chasi, 42',
       bookButton: 'Onlayn yozilish',
       upcomingTitle: 'Bugungi bo‘sh vaqtlar',
-      service1: 'Manikyur + gel-lak (tekislash)',
+      service1: 'Ayollar soch turmagi va ukladka',
       master1: 'Usta Madina • Top-stilist',
-      service2: 'Yaponcha spa-manikyur va parvarish',
-      master2: 'Usta Nigora • Nail-ekspert',
+      service2: 'Qoplamali manikyur',
+      master2: 'Usta Nigora • Neyl-usta',
       bonusLabel: 'Mijozning bonus balansi',
       bonusPoints: "45 000 so'm keshbek",
       reminderToast: 'Eslatma: ertaga soat 14:00 da yozuv',
@@ -339,12 +361,26 @@ export const translations = {
         },
         {
           title: '14 kun bepul',
-          subtitle: "Oldindan to'lov va karta ulashsiz barcha imkoniyatlardan to'liq foydalanib ko'ring",
+          subtitle: "Oldindan to'lov va karta ulashsiz tanlangan ta'rifning barcha imkoniyatlari",
         },
         {
           title: "Telegram'da yordam",
           subtitle: "O'zbek va rus tillarida mutaxassislardan tezkor javob va ko'mak",
         },
+      ],
+    },
+    segments: {
+      eyebrow: 'Kimlar uchun',
+      title: "Mijozlar ustaga yoziladigan har qanday salon uchun mos",
+      subtitle:
+        "Xizmatlar, davomiylik, narxlar va ustalar biznesingizga moslab sozlanadi — ikki kreslolik barbershopdan filiallari bor salonlar tarmog'igacha.",
+      items: [
+        { title: "Go'zallik salonlari", description: "Bir joyda bir nechta yo'nalish: soch, tirnoq, qosh, kosmetologiya." },
+        { title: 'Ayollar sartaroshxonalari', description: "Soch olish, bo'yash, ukladka — har bir ustada o'z davomiyligi va narxi bilan." },
+        { title: 'Erkaklar sartaroshxonalari va barbershoplar', description: "O'z barberingizga tez yozilish, eslatmalar va takroriy tashriflar." },
+        { title: 'Tirnoq studiyalari', description: "Manikyur, pedikyur, uzaytirish — ustma-ust tushmaydigan zich jadval." },
+        { title: 'Moda atelyelari', description: "Kiyib ko'rish, o'lcham olish va buyurtmani topshirish — navbatsiz va qo'ng'iroqsiz." },
+        { title: 'Va boshqa salonlar', description: "Qosh va kipriklar, kosmetologiya, massaj, SPA, tatu — usta va yozilish vaqti bor hamma joy." },
       ],
     },
     whatSalonGets: {
@@ -415,9 +451,6 @@ export const translations = {
       fallbackDescription:
         "Saloningiz ma'lumotlarini qoldiring — ustalar va filiallar soniga qarab eng qulay ta'rifni 10 daqiqada hisoblab beramiz.",
       fallbackButton: 'Hisob-kitob uchun ariza qoldirish',
-      demoPreviewButton: "Ta'riflar va kalkulyator namunasini ko'rsatish",
-      demoHideButton: "Demo ta'riflarni yashirish",
-      demoNotice: "Demo-rejim (ta'rif kartochkalari va kalkulyator namunasi)",
     },
     featureNames: {
       online_booking: 'Onlayn yozuv 24/7',
@@ -450,6 +483,12 @@ export const translations = {
       branchesWord: 'tagacha filial',
       managerHint: 'Aniq narxni menejer tasdiqlaydi',
       applyCalculationCta: 'Shu hisob-kitob bilan ariza qoldirish',
+      notFitMasters: "«{plan}» ta'rifi {max} tagacha usta uchun mo'ljallangan.",
+      notFitBranches: "«{plan}» ta'rifi {max} tagacha filial uchun mo'ljallangan.",
+      recommend: "Sizga «{plan}» ta'rifi mos keladi.",
+      switchCta: "«{plan}» bo'yicha hisoblash",
+      noPlanFits: "Bunday hajmdagi salon uchun shartlarni alohida tanlaymiz — ariza qoldiring.",
+      individualCta: 'Ariza qoldirish',
     },
     faq: {
       eyebrow: 'Savol va javoblar',
@@ -492,22 +531,30 @@ export const translations = {
       subtitle:
         "Logotipingiz bilan ilova qanday ko'rinishini ko'rsatamiz, savollaringizga javob beramiz va 14 kunlik bepul sinov muddatini ochib beramiz.",
       salonNameLabel: 'Salon nomi',
-      salonNamePlaceholder: 'Masalan, Lumière Nail Studio',
+      salonNamePlaceholder: 'Masalan, Barbershop Sardor',
       phoneLabel: 'Telefon',
-      phonePlaceholder: '+998 90 123-45-67',
+      phonePlaceholder: '+998 __ ___-__-__',
       ownerNameLabel: 'Ismingiz',
       ownerNamePlaceholder: 'Ismingizni kiriting',
       cityLabel: 'Shahar',
       cityPlaceholder: 'Toshkent, Samarqand, Buxoro...',
       mastersLabel: 'Ustalar soni',
       mastersPlaceholder: 'Masalan, 5',
+      branchesLabel: 'Nechta filial',
+      branchesPlaceholder: 'Masalan, 1',
+      estimateLabel: 'Taxminiy hisob',
+      estimatePerMonth: 'oyiga',
+      estimateSetup: '+ ulanish {sum} bir marta',
+      estimateNotFit: "Ta'rif bunday usta yoki filiallar soniga mo'ljallanmagan — menejer mosini taklif qiladi.",
       planLabel: "Ta'rif",
       planUnknownOption: 'Hozircha bilmayman',
       messageLabel: 'Izoh',
       messagePlaceholder: 'Saloningiz haqida yozing yoki savol qoldiring',
       submitButton: 'Arizani yuborish',
       submittingButton: 'Yuborilmoqda...',
-      privacyNote: "Tugmani bosish orqali shaxsiy ma'lumotlar qayta ishlanishiga rozilik bildirasiz",
+      privacyNotePrefix: 'Tugmani bosish orqali ',
+      privacyNoteLink: "shaxsiy ma'lumotlarni qayta ishlashga",
+      privacyNoteSuffix: ' rozilik bildirasiz',
       successTitle: "Rahmat! Ish kuni davomida siz bilan bog'lanamiz",
       successSubtitle:
         "Arizangiz qabul qilindi. Tezroq boshlashni istasangiz, hoziroq bizga Telegram'da yozing.",
@@ -517,19 +564,16 @@ export const translations = {
         INVALID_NAME: 'Salon nomini kiriting',
         INVALID_PHONE: 'Telefon raqamini tekshiring',
         INVALID_MASTERS: 'Ustalar soni — 1 dan 500 gacha',
+        INVALID_BRANCHES: 'Filiallar soni — 1 dan 100 gacha',
         TOO_MANY_REQUESTS: "Bir necha daqiqadan so'ng qayta urinib ko'ring",
         DEFAULT: "Yuborib bo'lmadi. Bizga Telegram orqali yozing",
       },
     },
     footer: {
-      tagline: "O'zbekistondagi manikyur va go'zallik salonlari uchun onlayn yozuv va mobil ilova.",
+      tagline: "O'zbekistondagi go'zallik salonlari, sartaroshxonalar, barbershoplar va atelyelar uchun onlayn yozuv va mobil ilova.",
       contactsTitle: 'Aloqa',
       telegramLabel: 'Telegram:',
-      telegramHandle: '@insidefire_beauty',
-      telegramUrl: 'https://t.me/insidefire_beauty',
       phoneLabel: 'Telefon:',
-      phoneDisplay: '+998 90 123-45-67',
-      phoneHref: 'tel:+998901234567',
       cityDisplay: "Toshkent sh., O'zbekiston",
       legalTitle: 'Hujjatlar',
       offerLink: 'Ommaviy oferta shartnomasi',
@@ -538,3 +582,8 @@ export const translations = {
     },
   },
 };
+
+/** Подставляет значения в шаблон вида «Тариф «{plan}» до {max} мастеров». */
+export function fill(template: string, values: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (_, key: string) => String(values[key] ?? ''));
+}

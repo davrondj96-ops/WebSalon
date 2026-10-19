@@ -144,6 +144,13 @@ export const HeroBannerSlider: React.FC<HeroBannerSliderProps> = ({
     lang === 'uz' && activeBanner.subtitle_uz && activeBanner.subtitle_uz.trim().length > 0
       ? activeBanner.subtitle_uz
       : activeBanner.subtitle;
+  // На узбекском русский бейдж и текст кнопки не показываем: бейдж скрываем,
+  // кнопка берёт стандартную подпись из переводов.
+  const displayBadge =
+    lang === 'uz' ? activeBanner.badge_uz?.trim() || null : activeBanner.badge;
+  const displayCta =
+    (lang === 'uz' ? activeBanner.cta_text_uz?.trim() : activeBanner.cta_text?.trim()) ||
+    t.primaryCta;
 
   const hasValidImage =
     Boolean(activeBanner.image_url) && !failedImages[activeBanner.id];
@@ -192,9 +199,9 @@ export const HeroBannerSlider: React.FC<HeroBannerSliderProps> = ({
               hasValidImage ? 'order-2' : 'order-1'
             }`}
           >
-            {activeBanner.badge && (
+            {displayBadge && (
               <p className="text-sm font-semibold text-[#b76e79]">
-                {activeBanner.badge}
+                {displayBadge}
               </p>
             )}
             <h1 className="mt-2.5 text-3xl font-extrabold tracking-tight text-[#1f1a1c] [text-wrap:balance] sm:text-5xl sm:leading-[1.12]">
@@ -212,7 +219,7 @@ export const HeroBannerSlider: React.FC<HeroBannerSliderProps> = ({
                 onClick={() => handleCtaAction(activeBanner.cta_url)}
                 className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-2xl bg-[#b76e79] px-7 py-3.5 text-base font-bold text-white shadow-sm transition-colors hover:bg-[#a35c67] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b76e79] whitespace-nowrap shrink-0"
               >
-                <span>{activeBanner.cta_text || t.primaryCta}</span>
+                <span>{displayCta}</span>
                 {isExternalCta ? (
                   <ExternalLink className="h-4 w-4" />
                 ) : (
